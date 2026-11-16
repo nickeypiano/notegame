@@ -281,7 +281,7 @@ body{background:radial-gradient(circle at 15% 10%,#fff3dc 0,transparent 40%),rad
     <div class="t">備份／換裝置</div>
     <div class="note" style="margin-top:0">進度只存在這台裝置的瀏覽器裡。換裝置前，先按「複製備份」，貼到新裝置的框框裡再按「匯入」。</div>
     <textarea id="backup" rows="3" placeholder="把備份文字貼在這裡"></textarea>
-    <div class="row"><button class="chip" id="copyBk">複製備份</button><button class="chip" id="importBk">匯入</button></div>
+    <div class="row"><button class="chip" id="saveFile">下載備份檔</button><label class="chip" style="cursor:pointer">從備份檔還原<input type="file" id="loadFile" accept=".json,application/json" style="display:none"></label><button class="chip" id="restorePrev">還原前一天的資料</button><button class="chip" id="copyBk">複製備份文字</button><button class="chip" id="importBk">匯入文字</button></div><div class="note" id="originNote"></div>
   </div>
   <button class="btn" id="teacherClose">完成</button>
 </div>
@@ -775,7 +775,15 @@ $('micBtn').onclick=()=>mic.on?micStop():micStart();
 const AVC=['#f4845f','#5b5bd6','#30a46c','#0fa3c7','#c24ccf','#e6b012','#e5484d','#8d6e63'];
 let DB={studs:[],pin:'0000',minutes:5};
 try{Object.assign(DB,JSON.parse(localStorage.getItem('ng_db')||'{}'));}catch(e){}
-function saveDB(){try{localStorage.setItem('ng_db',JSON.stringify(DB));}catch(e){}}
+function idb(){return new Promise((res,rej)=>{try{const r=indexedDB.open('notegame',1);r.onupgradeneeded=()=>r.result.createObjectStore('kv');r.onsuccess=()=>res(r.result);r.onerror=()=>rej(r.error);}catch(e){rej(e);}});}
+async function idbSet(k,v){try{const d=await idb();d.transaction('kv','readwrite').objectStore('kv').put(v,k);}catch(e){}}
+async function idbGet(k){try{const d=await idb();return await new Promise(res=>{const q=d.transaction('kv').objectStore('kv').get(k);q.onsuccess=()=>res(q.result);q.onerror=()=>res(null);});}catch(e){return null;}}
+function saveDB(){const t=JSON.stringify(DB);try{localStorage.setItem('ng_db',t);}catch(e){}idbSet('ng_db',t);
+  try{const day=new Date().toISOString().slice(0,10);if(localStorage.getItem('ng_bk_day')!==day){localStorage.setItem('ng_bk_prev',localStorage.getItem('ng_bk_last')||t);localStorage.setItem('ng_bk_last',t);localStorage.setItem('ng_bk_day',day);}}catch(e){}}
+try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}
+(async()=>{const has=(()=>{try{return !!localStorage.getItem('ng_db');}catch(e){return false;}})();const v=await idbGet('ng_db');
+  if(!has&&v){try{Object.assign(DB,JSON.parse(v));localStorage.setItem('ng_db',v);if(!$('picker').classList.contains('hide'))showPicker();}catch(e){}}
+  else if(has&&!v)idbSet('ng_db',localStorage.getItem('ng_db'));})();
 let CUR=null;
 function earn(){}
 function markProg(k,v){if(!CUR)return;CUR.prog=CUR.prog||{};if(!(CUR.prog[k]>=v))CUR.prog[k]=v;saveDB();}
@@ -848,7 +856,21 @@ const STK=[
  ['西瓜','#e2f6e8','<path d="M12 26a18 18 0 0 0 36 0z" fill="#30a46c"/><path d="M15 26a15 15 0 0 0 30 0z" fill="#e5484d"/><g fill="#3b2f22"><ellipse cx="24" cy="32" rx="1.2" ry="2"/><ellipse cx="30" cy="35" rx="1.2" ry="2"/><ellipse cx="36" cy="32" rx="1.2" ry="2"/></g>'],
  ['蛋糕','#fff1e0','<rect x="15" y="27" width="30" height="17" rx="3" fill="#f7a1c4"/><path d="M15 31q5 4 10 0t10 0t10 0" stroke="#fff" stroke-width="3" fill="none"/><rect x="28.5" y="16" width="3" height="11" fill="#5b5bd6"/><path d="M30 10q3 4 0 6q-3-2 0-6z" fill="#f2b705"/>'],
  ['小樹','#e2f6e8','<rect x="27" y="34" width="6" height="12" fill="#8d6e63"/><circle cx="30" cy="24" r="12" fill="#30a46c"/><circle cx="22" cy="30" r="7" fill="#30a46c"/><circle cx="38" cy="30" r="7" fill="#30a46c"/><circle cx="26" cy="22" r="2" fill="#e5484d"/><circle cx="35" cy="27" r="2" fill="#e5484d"/>'],
- ['雨傘','#e8f4ff','<path d="M12 30a18 18 0 0 1 36 0q-3-3-6 0q-3-3-6 0q-3-3-6 0q-3-3-6 0q-3-3-6 0z" fill="#f4845f"/><path d="M30 30v12q0 4-4 4q-3 0-3-3" stroke="#4a3b2a" stroke-width="2.5" fill="none"/>']];
+ ['雨傘','#e8f4ff','<path d="M12 30a18 18 0 0 1 36 0q-3-3-6 0q-3-3-6 0q-3-3-6 0q-3-3-6 0q-3-3-6 0z" fill="#f4845f"/><path d="M30 30v12q0 4-4 4q-3 0-3-3" stroke="#4a3b2a" stroke-width="2.5" fill="none"/>'],
+ ['暴龍','#e2f6e8','<path d="M14 44l4-10q-4-8 2-16q6-7 15-5q8 2 9 9l-6 1q0 3 3 4l-3 3q-4-1-6 1l3 6q2 5 7 7h-9l-3-5-3 5h-6l2-6q-5 2-9 6z" fill="#30a46c"/><circle cx="32" cy="17" r="2" fill="#fff"/><circle cx="32.5" cy="17" r="1" fill="#3b2f22"/><path d="M38 22l2 2 2-2" stroke="#fff" stroke-width="1.2" fill="none"/><path d="M22 18l3-3 2 3 3-3" stroke="#1f7a4a" stroke-width="2" fill="none"/>'],
+ ['長頸龍','#e8f4ff','<path d="M12 42q2-12 16-12q4 0 6-6l2-10q1-4 5-4q4 0 4 4q0 2-3 3l-2 1-2 14q6 2 7 10h-5v-5h-4v5h-5v-4h-6v4h-5z" fill="#5b5bd6"/><circle cx="42" cy="12" r="1.3" fill="#fff"/><path d="M16 33l-6 3" stroke="#5b5bd6" stroke-width="4" stroke-linecap="round"/>'],
+ ['三角龍','#fff1e0','<path d="M12 40q0-12 14-13l6-6q4-4 10 0l6 6-4 2 3 4-6 1q0 6-4 6v4h-5v-4h-8v4h-5v-4z" fill="#f4845f"/><path d="M41 23l9-5-6 8zM46 31l6 1-6 2z" fill="#fff1c7" stroke="#c9603e" stroke-width="1"/><path d="M33 21q2-8 9-8q-1 7-9 8z" fill="#f7b267"/><circle cx="39" cy="27" r="1.6" fill="#3b2f22"/>'],
+ ['劍龍','#fff6d6','<path d="M10 40q4-10 18-10t18 6l5 4h-6v4h-5v-4h-12v4h-5v-4h-6z" fill="#e6b012"/><path d="M18 31l3-8 4 7 3-9 4 9 3-8 4 8 3-6 2 7" fill="#e5484d" stroke="#c0392b" stroke-width="1" stroke-linejoin="round"/><circle cx="47" cy="37" r="1.3" fill="#3b2f22"/>'],
+ ['翼龍','#dff3ff','<path d="M30 28l-18-8q4 10 14 12zM30 28l18-8q-4 10-14 12z" fill="#c24ccf"/><ellipse cx="30" cy="31" rx="5" ry="7" fill="#c24ccf"/><path d="M30 24q3-6 10-6l-6 4q-1 3-4 2z" fill="#c24ccf"/><circle cx="32" cy="22" r="1.2" fill="#fff"/>'],
+ ['恐龍蛋','#fdf1c7','<ellipse cx="30" cy="32" rx="13" ry="16" fill="#fff" stroke="#e8cfb4" stroke-width="2"/><circle cx="25" cy="26" r="3" fill="#9ad0b1"/><circle cx="35" cy="36" r="4" fill="#9ad0b1"/><circle cx="33" cy="22" r="2" fill="#9ad0b1"/><path d="M18 31l5 3 4-4 4 4 4-4 4 3 4-2" stroke="#c9a97a" stroke-width="2" fill="none"/>'],
+ ['公車','#fff3c4','<rect x="10" y="17" width="40" height="22" rx="4" fill="#f2b705"/><g fill="#dff3ff"><rect x="14" y="21" width="7" height="7" rx="1"/><rect x="23" y="21" width="7" height="7" rx="1"/><rect x="32" y="21" width="7" height="7" rx="1"/><rect x="41" y="21" width="6" height="11" rx="1"/></g><rect x="10" y="31" width="30" height="2" fill="#e5484d"/><circle cx="18" cy="40" r="4.5" fill="#3b2f22"/><circle cx="40" cy="40" r="4.5" fill="#3b2f22"/>'],
+ ['消防車','#ffe3e3','<path d="M8 38V25h22l4-7h10l6 8v12z" fill="#e5484d"/><rect x="36" y="20" width="7" height="6" fill="#dff3ff"/><path d="M10 22l20-6M12 20l1 3M17 18l1 3M22 17l1 3M27 15l1 3" stroke="#bbb" stroke-width="2"/><circle cx="16" cy="40" r="4.5" fill="#3b2f22"/><circle cx="41" cy="40" r="4.5" fill="#3b2f22"/><rect x="28" y="13" width="5" height="3" fill="#0fa3c7"/>'],
+ ['警車','#e6e9ff','<path d="M10 38v-7l6-2 5-8h17l6 8 6 2v7z" fill="#fff" stroke="#3b4a8a" stroke-width="2"/><rect x="10" y="32" width="40" height="3" fill="#3b4a8a"/><path d="M24 23h5v6h-8zM32 23h5l4 6h-9z" fill="#dff3ff"/><rect x="26" y="16" width="4" height="4" fill="#e5484d"/><rect x="30" y="16" width="4" height="4" fill="#0fa3c7"/><circle cx="20" cy="39" r="4.5" fill="#3b2f22"/><circle cx="41" cy="39" r="4.5" fill="#3b2f22"/>'],
+ ['救護車','#fff','<path d="M8 38V20h26l4 0 8 8 6 2v8z" fill="#fff" stroke="#e5484d" stroke-width="2"/><path d="M36 21h3l6 7h-9z" fill="#dff3ff"/><path d="M19 23v10M14 28h10" stroke="#e5484d" stroke-width="3.5"/><rect x="20" y="16" width="6" height="4" fill="#e5484d"/><circle cx="16" cy="40" r="4.5" fill="#3b2f22"/><circle cx="42" cy="40" r="4.5" fill="#3b2f22"/>'],
+ ['挖土機','#fff0c2','<rect x="10" y="36" width="28" height="7" rx="3.5" fill="#4a3b2a"/><rect x="13" y="24" width="20" height="12" rx="2" fill="#f2b705"/><rect x="16" y="17" width="10" height="9" rx="1" fill="#f2b705"/><rect x="18" y="19" width="6" height="5" fill="#dff3ff"/><path d="M33 28l10-12 6 8" stroke="#e6a000" stroke-width="4" fill="none" stroke-linejoin="round"/><path d="M46 22l6 4-2 8-8-3z" fill="#8d6e63"/>'],
+ ['小火車','#ffe7cc','<rect x="12" y="20" width="14" height="16" rx="2" fill="#e5484d"/><rect x="15" y="23" width="8" height="6" fill="#dff3ff"/><rect x="26" y="26" width="22" height="10" rx="2" fill="#5b5bd6"/><rect x="38" y="18" width="5" height="8" fill="#4a3b2a"/><circle cx="41" cy="13" r="3" fill="#ddd"/><circle cx="18" cy="39" r="4" fill="#3b2f22"/><circle cx="32" cy="39" r="4" fill="#3b2f22"/><circle cx="43" cy="39" r="4" fill="#3b2f22"/>'],
+ ['飛機','#dff3ff','<path d="M10 32l34-6q6 0 6 3t-6 3z" fill="#fff" stroke="#0fa3c7" stroke-width="2"/><path d="M28 29l-6-12h5l10 11zM28 32l-4 9h5l7-9z" fill="#0fa3c7"/><path d="M12 31l-2-7h4l4 6z" fill="#e5484d"/><circle cx="40" cy="29" r="1.5" fill="#0fa3c7"/><circle cx="35" cy="30" r="1.5" fill="#0fa3c7"/>'],
+ ['垃圾車','#e2f6e8','<rect x="8" y="18" width="28" height="20" rx="3" fill="#30a46c"/><path d="M36 38V24h8l6 7v7z" fill="#30a46c"/><path d="M38 26h5l4 5h-9z" fill="#dff3ff"/><path d="M14 23v10M20 23v10M26 23v10" stroke="#1f7a4a" stroke-width="2"/><circle cx="16" cy="40" r="4.5" fill="#3b2f22"/><circle cx="42" cy="40" r="4.5" fill="#3b2f22"/>']];
 function stickerSvg(i){const[n,bg,ic]=STK[i];return `<svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="27" fill="${bg}" stroke="#fff" stroke-width="3"/><circle cx="30" cy="30" r="27" fill="none" stroke="#ecd8b6" stroke-width="1.5" stroke-dasharray="3 3"/>${ic}</svg>`;}
 function offerSticker(song){if(!CUR)return;CUR.stickers=CUR.stickers||[];const own=new Set(CUR.stickers.map(x=>x.i));
   let pool=STK.map((_,i)=>i).filter(i=>!own.has(i));if(pool.length<3)pool=STK.map((_,i)=>i);
@@ -868,7 +890,7 @@ $('pad').onclick=e=>{const k=e.target.dataset.k;if(k==null)return;if(k==='←')p
   if(pinBuf.length===4){if(pinBuf===DB.pin){$('pin').classList.add('hide');const c=pinCb;pinCb=null;c&&c();}else{$('pindots').animate([{transform:'translateX(-8px)'},{transform:'translateX(8px)'},{transform:'none'}],{duration:300});pinBuf='';setTimeout(drawPin,300);}}};
 $('pinCancel').onclick=()=>{$('pin').classList.add('hide');pinCb=null;};
 /* teacher */
-function showTeacher(){$('settings').classList.add('hide');drawTeacher();$('teacher').classList.remove('hide');}
+function showTeacher(){$('originNote').textContent='目前網址：'+location.host+'（要一直用同一個網址或同一個主畫面圖示，資料才會在）';$('settings').classList.add('hide');drawTeacher();$('teacher').classList.remove('hide');}
 function drawTeacher(){
   $('tlist').innerHTML=DB.studs.length?DB.studs.map((st,i)=>{
     return `<div class="trow"><div class="av" style="background:${st.color}">${st.name.slice(0,1)}</div><div class="nm">${st.name}</div>
@@ -890,6 +912,9 @@ function tAction(a,i,btn){const st=DB.studs[i];
 $('addStud').onclick=()=>{const v=$('newName').value.trim();if(!v)return;DB.studs.push({id:Date.now(),name:v.slice(0,8),color:AVC[DB.studs.length%AVC.length],prog:{}});saveDB();$('newName').value='';drawTeacher();};
 $('minRow').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{DB.minutes=+c.dataset.v;saveDB();drawTeacher();});
 $('savePin').onclick=()=>{const v=$('newPin').value;if(/^\d{4}$/.test(v)){DB.pin=v;saveDB();$('newPin').value='';toast('密碼已更新');}else toast('請輸入 4 位數字');};
+$('saveFile').onclick=()=>{const blob=new Blob([JSON.stringify(DB,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='音符找琴鍵備份-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);};
+$('loadFile').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!Array.isArray(d.studs))throw 0;DB=Object.assign({studs:[],pin:'0000',minutes:5},d);saveDB();CUR=null;drawTeacher();toast('還原完成');}catch(err){toast('這個檔案不是備份檔');}});};
+$('restorePrev').onclick=()=>{try{const t=localStorage.getItem('ng_bk_prev');if(!t)return toast('還沒有前一天的備份');const d=JSON.parse(t);DB=Object.assign({studs:[],pin:'0000',minutes:5},d);saveDB();CUR=null;drawTeacher();toast('已還原前一天的資料');}catch(e){toast('還原失敗');}};
 $('copyBk').onclick=()=>{const t=JSON.stringify(DB);$('backup').value=t;try{navigator.clipboard.writeText(t).then(()=>toast('已複製備份'),()=>toast('請手動全選框框裡的文字複製'));}catch(e){toast('請手動全選框框裡的文字複製');}};
 $('importBk').onclick=()=>{try{const d=JSON.parse($('backup').value);if(!Array.isArray(d.studs))throw 0;DB=Object.assign({studs:[],pin:'0000',minutes:5},d);saveDB();CUR=null;drawTeacher();toast('匯入完成');}catch(e){toast('備份文字不正確');}};
 $('teacherClose').onclick=()=>{$('teacher').classList.add('hide');if(!CUR)showPicker();else updStud();};
