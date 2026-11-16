@@ -3,7 +3,7 @@
   "short_name": "音符找琴鍵",
   "start_url": "/",
   "display": "fullscreen",
-  "orientation": "any",
+  "orientation": "landscape",
   "background_color": "#fdf6ea",
   "theme_color": "#fdf6ea",
   "icons": [

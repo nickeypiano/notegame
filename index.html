@@ -127,6 +127,10 @@ body{background:radial-gradient(circle at 15% 10%,#fff3dc 0,transparent 40%),rad
 .trow .nm{font-weight:900;font-size:17px;min-width:60px}.trow .st{font-size:13px;color:#8a7a66;flex:1;min-width:160px}
 .trow .chip{font-size:13px;padding:2px 9px}.trow .det{width:100%;font-size:12.5px;color:#8a7a66;line-height:1.7}
 @media (max-height:540px){.stud{height:34px}.stud .av{width:26px;height:26px}}
+.piano.wide .w .lab{font-size:clamp(10px,1.7vw,17px)}.piano.wide .w .dot{width:15px;height:15px}.piano.wide .w{margin:0 1px}
+@media (orientation:portrait){.rotate{display:flex}}
+.rotate{display:none;position:fixed;left:50%;bottom:10px;transform:translateX(-50%);background:#4a3b2a;color:#fff;border-radius:999px;padding:6px 14px;font-size:13px;z-index:4;opacity:.85;pointer-events:none;align-items:center;gap:6px}
+@media (max-height:540px){.piano{height:33vh}.mascot{width:76px}#bird{width:60px;height:60px}.bubble{font-size:12px;padding:4px 6px;min-height:30px}}
 </style>
 </head>
 <body>
@@ -204,6 +208,7 @@ body{background:radial-gradient(circle at 15% 10%,#fff3dc 0,transparent 40%),rad
   <div class="note">上方麥克風按鈕會聽真的鋼琴（任何八度都可以）。用麥克風時遊戲會暫停自己的聲音，避免聽錯。電腦鍵盤 A S D F G H J K 也能彈；Chrome 可接 MIDI 電子琴。</div>
 </div>
 <div class="toast" id="toast"></div>
+<div class="rotate" id="rotateHint">把平板轉成橫的，樂譜會更大</div>
 <div class="overlay hide" id="picker">
   <div class="big">今天是誰要玩？</div>
   <div class="pgrid" id="pgrid"></div>
@@ -260,30 +265,51 @@ body{background:radial-gradient(circle at 15% 10%,#fff3dc 0,transparent 40%),rad
 <script>
 const FCLEF="M15.193 79.414C8.145 79.414,5 84.552,5 88.428C5 91.657,6.685 94.437,9.97 94.437C12.525 94.437,14.266 92.668,14.266 90.168C14.266 87.585,12.357 85.956,10.391 85.956C9.296 85.956,8.875 86.237,8.37 86.237C7.836 86.237,7.696 85.928,7.696 85.507C7.696 83.907,10.139 80.93,14.266 80.93C18.535 80.93,20.416 85.142,20.416 91.488C20.416 102.776,14.828 109.094,5.393 114.458C5.028 114.654,4.803 114.879,4.803 115.188C4.803 115.44,4.972 115.665,5.337 115.665C5.534 115.665,5.758 115.609,6.011 115.469C15.951 110.611,26.481 103.422,26.481 91.123C26.481 84.103,22.185 79.414,15.193 79.414M30.44 82.727C29.177 82.727,28.222 83.682,28.222 84.946C28.222 86.209,29.177 87.164,30.44 87.164C31.676 87.164,32.659 86.209,32.659 84.946C32.659 83.682,31.676 82.727,30.44 82.727M30.469 92.864C29.233 92.864,28.278 93.791,28.278 95.054C28.278 96.318,29.233 97.245,30.469 97.245C31.732 97.245,32.659 96.318,32.659 95.054C32.659 93.791,31.732 92.864,30.469 92.864";
 const CLEF="M20.191 93.208C20.135 92.731,20.191 92.703,20.444 92.45C24.824 88.378,28.138 83.24,28.138 77.034C28.138 73.524,27.155 70.042,25.498 67.627C24.881 66.729,23.842 65.606,23.392 65.606C22.831 65.606,21.567 66.644,20.781 67.543C17.776 70.856,16.794 75.911,16.794 80.123C16.794 82.454,17.102 85.093,17.383 86.75C17.468 87.227,17.496 87.311,17.018 87.733C11.178 92.534,5 98.319,5 106.49C5 113.51,9.802 120.193,19.714 120.193C20.641 120.193,21.708 120.109,22.522 119.94C22.943 119.856,23.027 119.828,23.112 120.305C23.589 123.029,24.207 126.539,24.207 128.449C24.207 134.43,20.163 135.16,17.776 135.16C15.586 135.16,14.547 134.514,14.547 133.98C14.547 133.7,14.912 133.587,15.839 133.278C17.102 132.913,18.535 131.846,18.535 129.488C18.535 127.269,17.131 125.36,14.66 125.36C11.964 125.36,10.335 127.522,10.335 130.021C10.335 132.632,11.908 136.62,18.029 136.62C20.725 136.62,25.976 135.384,25.976 128.533C25.976 126.202,25.246 122.383,24.824 119.856C24.74 119.379,24.768 119.435,25.33 119.182C29.43 117.554,32.125 114.128,32.125 109.551C32.125 104.384,28.334 99.807,22.382 99.807C21.343 99.807,21.343 99.807,21.202 99.077M24.01 71.867C25.33 71.867,26.425 72.962,26.425 75.181C26.425 79.674,22.578 83.324,19.405 86.104C19.124 86.357,18.956 86.3,18.872 85.767C18.703 84.728,18.619 83.352,18.619 82.06C18.619 75.742,21.539 71.867,24.01 71.867M19.602 99.414C19.714 100.172,19.714 100.144,18.984 100.369C15.446 101.576,13.115 104.777,13.115 108.231C13.115 111.853,15.025 114.437,17.776 115.391C18.113 115.504,18.591 115.616,18.872 115.616C19.18 115.616,19.349 115.419,19.349 115.167C19.349 114.886,19.04 114.774,18.759 114.661C17.046 113.931,15.839 112.19,15.839 110.337C15.839 108.006,17.411 106.293,19.882 105.591C20.528 105.423,20.612 105.479,20.697 105.928L22.718 117.975C22.803 118.424,22.747 118.424,22.157 118.536C21.511 118.649,20.697 118.733,19.882 118.733C12.806 118.733,8.229 114.802,8.229 109.186C8.229 106.799,8.65 103.598,11.992 99.807C14.435 97.111,16.288 95.595,18.17 94.079C18.591 93.742,18.675 93.798,18.759 94.219M22.382 105.844C22.297 105.339,22.353 105.226,22.831 105.283C26.116 105.563,28.812 108.315,28.812 111.853C28.812 114.409,27.267 116.458,25.021 117.61C24.544 117.834,24.459 117.834,24.375 117.357";
-const NOTES=[
- {id:'C4',solfa:'Do',abc:'C',midi:60,step:0,color:'#e5484d'},
- {id:'D4',solfa:'Re',abc:'D',midi:62,step:1,color:'#f17c2b'},
- {id:'E4',solfa:'Mi',abc:'E',midi:64,step:2,color:'#e6b012'},
- {id:'F4',solfa:'Fa',abc:'F',midi:65,step:3,color:'#30a46c'},
- {id:'G4',solfa:'Sol',abc:'G',midi:67,step:4,color:'#0fa3c7'},
- {id:'A4',solfa:'La',abc:'A',midi:69,step:5,color:'#5b5bd6'},
- {id:'B4',solfa:'Si',abc:'B',midi:71,step:6,color:'#c24ccf'},
- {id:'C5',solfa:'高Do',abc:'C',midi:72,step:7,color:'#e5484d'}];
-const BYID=Object.fromEntries(NOTES.map(n=>[n.id,n]));
-const BLACKS=[{midi:61,after:0},{midi:63,after:1},{midi:66,after:3},{midi:68,after:4},{midi:70,after:5}];
-const LEVELS=[{name:'第1關 Do Re Mi',idx:[0,1,2]},{name:'第2關 Do～Sol',idx:[0,1,2,3,4]},{name:'第3關 Do～高Do',idx:[0,1,2,3,4,5,6,7]}];
+/* ---------- pitch model: d = diatonic index, C3=0 … C5=14 ---------- */
+const LETTER=['C','D','E','F','G','A','B'],SOL=['Do','Re','Mi','Fa','Sol','La','Si'],SEMI=[0,2,4,5,7,9,11];
+const DCOL=['#e5484d','#f17c2b','#e6b012','#30a46c','#0fa3c7','#5b5bd6','#c24ccf'];
+const midiOf=d=>48+12*Math.floor(d/7)+SEMI[d%7];
+const dOfId=id=>LETTER.indexOf(id[0])+7*(+id.slice(1)-3);
+function nameOf(d){const c=S.mode==='rhythm'?'treble':clefKey();if(d===14)return '高Do';if(d===7&&c!=='treble')return '中央Do';if(d===0&&c==='grand')return '低Do';return SOL[d%7];}
+const LV={
+ treble:[{name:'第1關 Do Re Mi',idx:[7,8,9]},{name:'第2關 Do～Sol',idx:[7,8,9,10,11]},{name:'第3關 Do～高Do',idx:[7,8,9,10,11,12,13,14]}],
+ bass:[{name:'第1關 中央Do Si La',idx:[7,6,5]},{name:'第2關 Fa～中央Do',idx:[3,4,5,6,7]},{name:'第3關 Do～中央Do',idx:[0,1,2,3,4,5,6,7]}],
+ grand:[{name:'第1關 中央Do附近',idx:[4,5,6,7,8,9,10]},{name:'第2關 兩個八度',idx:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]}]};
+const clefKey=()=>S.clef==='bass'||S.clef==='grand'?S.clef:'treble';
+const levels=()=>LV[clefKey()];
+function kbRange(){if(S.mode==='rhythm')return[7,14];const c=clefKey();return c==='bass'?[0,7]:c==='grand'?[0,14]:[7,14];}
 const SONGS=[
  {name:'小蜜蜂',tempo:90,s:'G4 E4 E4:2 | F4 D4 D4:2 | C4 D4 E4 F4 | G4 G4 G4:2 | G4 E4 E4:2 | F4 D4 D4:2 | C4 E4 G4 G4 | C4:4'},
  {name:'小星星',tempo:90,s:'C4 C4 G4 G4 | A4 A4 G4:2 | F4 F4 E4 E4 | D4 D4 C4:2 | G4 G4 F4 F4 | E4 E4 D4:2 | G4 G4 F4 F4 | E4 E4 D4:2 | C4 C4 G4 G4 | A4 A4 G4:2 | F4 F4 E4 E4 | D4 D4 C4:2'},
  {name:'瑪莉有隻小綿羊',tempo:96,s:'E4 D4 C4 D4 | E4 E4 E4:2 | D4 D4 D4:2 | E4 G4 G4:2 | E4 D4 C4 D4 | E4 E4 E4 E4 | D4 D4 E4 D4 | C4:4'},
- {name:'隨機新曲',random:true,tempo:80,s:''},
- {name:'歡樂頌',tempo:96,s:'E4 E4 F4 G4 | G4 F4 E4 D4 | C4 C4 D4 E4 | E4:1.5 D4:0.5 D4:2 | E4 E4 F4 G4 | G4 F4 E4 D4 | C4 C4 D4 E4 | D4:1.5 C4:0.5 C4:2'}];
-SONGS.forEach(so=>{if(so.random)return;let b=0;so.notes=[];so.s.split(/\s+/).forEach(t=>{if(t==='|')return;const[id,d]=t.split(':');const dur=d?+d:1;so.notes.push({n:BYID[id],dur,beat:b});b+=dur;});so.total=b;});
+ {name:'倫敦鐵橋',tempo:96,s:'G4:1.5 A4:0.5 G4 F4 | E4 F4 G4:2 | D4 E4 F4:2 | E4 F4 G4:2 | G4:1.5 A4:0.5 G4 F4 | E4 F4 G4:2 | D4:2 G4 E4 | C4:4'},
+ {name:'歡樂頌',tempo:96,s:'E4 E4 F4 G4 | G4 F4 E4 D4 | C4 C4 D4 E4 | E4:1.5 D4:0.5 D4:2 | E4 E4 F4 G4 | G4 F4 E4 D4 | C4 C4 D4 E4 | D4:1.5 C4:0.5 C4:2'},
+ {name:'聖誕鈴聲',tempo:100,s:'E4 E4 E4:2 | E4 E4 E4:2 | E4 G4 C4:1.5 D4:0.5 | E4:4 | F4 F4 F4:1.5 F4:0.5 | F4 E4 E4 E4:0.5 E4:0.5 | E4 D4 D4 E4 | D4:2 G4:2'},
+ {name:'隨機新曲',random:true,tempo:80}];
+const GSONGS=[
+ {name:'雙手輪流',tempo:84,R:'C4 D4 E4:2 | r:4 | E4 D4 C4:2 | r:4 | G4 F4 E4:2 | r:4 | E4 D4 C4:2 | r:4',L:'r:4 | C4 B3 A3:2 | r:4 | A3 B3 C4:2 | r:4 | F3 G3 A3:2 | r:4 | G3 B3 C4:2'},
+ {name:'兩隻老虎',tempo:96,R:'C4 D4 E4 C4 | C4 D4 E4 C4 | E4 F4 G4:2 | E4 F4 G4:2 | G4:0.5 A4:0.5 G4:0.5 F4:0.5 E4 C4 | G4:0.5 A4:0.5 G4:0.5 F4:0.5 E4 C4 | C4 r C4:2 | C4 r C4:2',L:'r:4 | r:4 | r:4 | r:4 | r:4 | r:4 | r G3 r:2 | r G3 r:2'},
+ {name:'小星星（雙手）',tempo:84,R:SONGS[1].s,L:'C3:4 | F3:2 C3:2 | F3:2 C3:2 | G3:2 C3:2 | C3:2 F3:2 | C3:2 G3:2 | C3:2 F3:2 | C3:2 G3:2 | C3:4 | F3:2 C3:2 | F3:2 C3:2 | G3:2 C3:2'},
+ {name:'歡樂頌（雙手）',tempo:90,R:'E4 E4 F4 G4 | G4 F4 E4 D4 | C4 C4 D4 E4 | E4:1.5 D4:0.5 D4:2 | E4 E4 F4 G4 | G4 F4 E4 D4 | C4 C4 D4 E4 | D4:1.5 C4:0.5 C4:2',L:'C3:4 | C3:2 G3:2 | C3:2 E3:2 | G3:4 | C3:4 | C3:2 G3:2 | C3:2 E3:2 | G3:2 C3:2'},
+ {name:'隨機雙手',random:true,grand:true,tempo:80}];
+GSONGS.forEach(g=>g.grand=true);
+function parseVoice(str,staff,shift=0){const out=[];let b=0;(str||'').split(/\s+/).forEach(t=>{if(!t||t==='|')return;const[id,dd]=t.split(':');const dur=dd?+dd:1;
+  if(id==='r')out.push({rest:true,dur,beat:b,staff});else out.push({d:dOfId(id)+shift,dur,beat:b,staff});b+=dur;});return {notes:out,total:b};}
+function buildSong(def){
+  if(def.grand){const r=parseVoice(def.R,'t'),l=parseVoice(def.L,'b');
+    const notes=r.notes.concat(l.notes).filter(n=>!n.rest).sort((a,b)=>a.beat-b.beat||a.d-b.d);return {name:def.name,tempo:def.tempo,grand:true,notes,total:Math.max(r.total,l.total)};}
+  const bass=clefKey()==='bass';const v=parseVoice(def.s,bass?'b':'t',bass?-7:0);return {name:def.name,tempo:def.tempo,notes:v.notes,total:v.total};}
+const songList=()=>clefKey()==='grand'?GSONGS:SONGS;
+function curSong(){
+  if(S.mode==='rhythm')return G.rhy||(G.rhy=genRhythm());
+  const L=songList();const i=Math.min(S.song,L.length-1);const def=L[i];const key=clefKey()+':'+i;
+  if(def.random){if(!G.rand||G.randKey!==key){G.rand=def.grand?genGrand():genMelody();G.randKey=key;}return G.rand;}
+  if(!G.songCache||G.songKey!==key){G.songCache=buildSong(def);G.songKey=key;}return G.songCache;}
 const CHEERS=['答對了！','好棒！','太厲害了！','好聰明！','就是這個！'];
 const TRY=['再試試看～','再找找看！','差一點點！'];
 const TEMPOS=[{name:'慢',f:0.7},{name:'中',f:0.85},{name:'快',f:1}];
 
-let S={kbd:true,lab:'solfa',color:true,autoSnd:true,mel:true,met:true,lv:0,song:0,tempo:0,mode:'read'};
+let S={kbd:true,lab:'solfa',color:true,autoSnd:true,mel:true,met:true,lv:0,song:0,tempo:0,mode:'read',clef:'treble'};
 try{Object.assign(S,JSON.parse(localStorage.getItem('notegame2')||'{}'));}catch(e){}
 function save(){try{localStorage.setItem('notegame2',JSON.stringify(S));}catch(e){}}
 let G={};
@@ -310,36 +336,46 @@ function stopBus(){if(bus){try{bus.disconnect();}catch(e){}bus=null;}}
 /* ---------- drawing ---------- */
 const NS='http://www.w3.org/2000/svg';
 function el(t,a,p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
-const yOf=s=>(S.clef==='bass'?110:160)-s*10;
-const off=()=>S.clef==='bass'?-12:0;
-const mid=n=>n.midi+off();
+const GOFF=130; // bass staff offset in grand staff
+function localY(d,staff){return staff==='b'?110-10*d:230-10*d;}
+function staffOff(staff){return staff==='b'&&clefKey()==='grand'?GOFF:0;}
 const STAR='M12 1.8l3.1 6.4 7 1-5.1 4.9 1.2 7L12 17.8 5.8 21.1 7 14.1 1.9 9.2l7-1z';
 function starSvg(cls=''){return `<svg class="${cls}" viewBox="0 0 24 24"><path d="${STAR}" fill="#ffc53d" stroke="#e8a317" stroke-width="1.4" stroke-linejoin="round"/><path d="M8.5 9.5l1.5-.2" stroke="#fff" stroke-width="1.4" stroke-linecap="round" opacity=".8"/></svg>`;}
-function staffLines(p,x1,x2){for(let i=0;i<5;i++)el('line',{x1,x2,y1:60+i*20,y2:60+i*20,stroke:'#5b4a36','stroke-width':2},p);}
-function clef(p,x){el('path',{d:S.clef==='bass'?FCLEF:CLEF,fill:'#4a3b2a',transform:`translate(${x},-100) scale(2)`},p);}
-function noteColor(n){return S.color?n.color:'#2b2117';}
-function drawNote(p,x,n,dur,color,rh){
-  const g=el('g',{style:`--c:${color}`},p);const s=n.step,y=rh?100:yOf(s);
-  if(!rh&&(y>=160||y<=40))el('line',{x1:x-24,x2:x+24,y1:y,y2:y,stroke:'#5b4a36','stroke-width':2},g);
-  const up=rh||y>100;
-  if(dur<4){if(up)el('line',{class:'ns',x1:x+12.5,x2:x+12.5,y1:y-2,y2:y-68,'stroke-width':3},g);else el('line',{class:'ns',x1:x-12.5,x2:x-12.5,y1:y+2,y2:y+68,'stroke-width':3},g);}
-  if(dur===.5){if(up)el('path',{class:'nf',d:`M${x+11} ${y-68}q3 14 15 21q7 6 1 20q2-13-16-18z`},g);else el('path',{class:'nf',d:`M${x-14} ${y+68}q3-14 15-21q7-6 1-20q2 13-16 18z`},g);}
+function staffLines(p,x1,x2,oy=0){for(let i=0;i<5;i++)el('line',{x1,x2,y1:60+i*20+oy,y2:60+i*20+oy,stroke:'#5b4a36','stroke-width':2},p);}
+function drawClef(p,x,which,oy=0){el('path',{d:which==='b'?FCLEF:CLEF,fill:'#4a3b2a',transform:`translate(${x},${-100+oy}) scale(2)`},p);}
+function drawClefs(p,x){const c=clefKey();if(c==='grand'){drawClef(p,x,'t');drawClef(p,x,'b',GOFF);}else drawClef(p,x,c==='bass'?'b':'t');}
+function allLines(p,x1,x2){staffLines(p,x1,x2);if(clefKey()==='grand')staffLines(p,x1,x2,GOFF);}
+const dColor=d=>S.color?DCOL[d%7]:'#2b2117';
+/* opts: up (force dir), noFlag, rhythm */
+function drawNoteY(p,x,ly,oy,dur,color,o={}){
+  const g=el('g',{style:`--c:${color}`},p);const y=ly+oy;
+  if(!o.rhythm){for(let l=160;l<=ly;l+=20)el('line',{x1:x-24,x2:x+24,y1:l+oy,y2:l+oy,stroke:'#5b4a36','stroke-width':2},g);
+    for(let l=40;l>=ly;l-=20)el('line',{x1:x-24,x2:x+24,y1:l+oy,y2:l+oy,stroke:'#5b4a36','stroke-width':2},g);}
+  const up=o.up!=null?o.up:(o.rhythm||ly>100);const sl=o.stemLen||68;
+  if(dur<4){if(up)el('line',{class:'ns',x1:x+12.5,x2:x+12.5,y1:y-2,y2:y-sl,'stroke-width':3},g);else el('line',{class:'ns',x1:x-12.5,x2:x-12.5,y1:y+2,y2:y+sl,'stroke-width':3},g);}
+  if(dur===.5&&!o.noFlag){if(up)el('path',{class:'nf',d:`M${x+11} ${y-sl}q3 14 15 21q7 6 1 20q2-13-16-18z`},g);else el('path',{class:'nf',d:`M${x-14} ${y+sl}q3-14 15-21q7-6 1-20q2 13-16 18z`},g);}
   el('ellipse',{class:'nf',cx:x,cy:y,rx:14,ry:10,transform:`rotate(-20 ${x} ${y})`},g);
   if(dur>=2)el('ellipse',{cx:x,cy:y,rx:8.5,ry:4.3,fill:'#fff',transform:`rotate(-35 ${x} ${y})`},g);
-  if(dur===1.5||dur===3)el('circle',{class:'nf',cx:x+24,cy:y-(y%20===0?7:0),r:3.6},g);
+  if(dur===1.5||dur===3)el('circle',{class:'nf',cx:x+24,cy:y-(ly%20===0?7:0),r:3.6},g);
   return g;
 }
 function addStar(p,x,y,size=28){const g=el('g',{transform:`translate(${x-size/2},${y-size/2}) scale(${size/24})`},p);el('path',{d:STAR,fill:'#ffc53d',stroke:'#e8a317','stroke-width':1.4,'stroke-linejoin':'round'},g);return g;}
 
 /* ---------- piano ---------- */
-const piano=$('piano'),keyEls={};
-function buildPiano(){piano.innerHTML='';
-  NOTES.forEach(n=>{const k=document.createElement('div');k.className='w';k.dataset.midi=n.midi;k.innerHTML=`<div class="dot" style="background:${n.color}"></div><div class="lab"></div>`;piano.appendChild(k);keyEls[n.midi]=k;});
-  BLACKS.forEach(b=>{const k=document.createElement('div');k.className='b';k.dataset.midi=b.midi;k.style.left=((b.after+1)/8*100)+'%';piano.appendChild(k);keyEls[b.midi]=k;});}
-function refreshKeys(){piano.classList.toggle('showColor',S.color);piano.classList.toggle('hide',!S.kbd);$('kbdBtn').classList.toggle('live',S.kbd);
-  NOTES.forEach((n,i)=>{const k=keyEls[n.midi];k.querySelector('.lab').textContent=S.lab==='solfa'?n.solfa:S.lab==='abc'?n.abc:'';k.classList.toggle('off',S.mode==='read'&&!S.timed&&!LEVELS[S.lv].idx.includes(i));});}
-piano.addEventListener('pointerdown',e=>{const k=e.target.closest('.w,.b');if(!k)return;e.preventDefault();input(+k.dataset.midi+off(),'kbd');});
-function flashKey(m,cls,ms=180){m-=off();while(m<60)m+=12;while(m>72)m-=12;const k=keyEls[m];if(!k)return;if(cls==='bad'){k.classList.remove('bad');void k.offsetWidth;}k.classList.add(cls);if(ms)setTimeout(()=>k.classList.remove(cls),ms);}
+const piano=$('piano');let keyEls={};
+function buildPiano(){piano.innerHTML='';keyEls={};const[lo,hi]=kbRange();const n=hi-lo+1;piano.classList.toggle('wide',n>8);
+  for(let d=lo;d<=hi;d++){const m=midiOf(d);const k=document.createElement('div');k.className='w';k.dataset.midi=m;k.dataset.d=d;
+    k.innerHTML=`<div class="dot" style="background:${DCOL[d%7]}"></div><div class="lab"></div>`;piano.appendChild(k);keyEls[m]=k;}
+  for(let d=lo;d<hi;d++){if([2,6].includes(d%7))continue;const m=midiOf(d)+1;const k=document.createElement('div');k.className='b';k.dataset.midi=m;k.style.left=((d-lo+1)/n*100)+'%';k.style.width=(60/n)+'%';piano.appendChild(k);keyEls[m]=k;}
+  G.kbKey=lo+'-'+hi+S.clef;}
+function refreshKeys(){const[lo,hi]=kbRange();if(G.kbKey!==lo+'-'+hi+S.clef)buildPiano();
+  piano.classList.toggle('showColor',S.color);piano.classList.toggle('hide',!S.kbd);$('kbdBtn').classList.toggle('live',S.kbd);
+  const lvIdx=S.mode==='read'&&!S.timed?(levels()[S.lv]||levels()[0]).idx:null;
+  for(let d=lo;d<=hi;d++){const k=keyEls[midiOf(d)];k.querySelector('.lab').textContent=S.lab==='solfa'?nameOf(d):S.lab==='abc'?LETTER[d%7]:'';k.classList.toggle('off',!!lvIdx&&!lvIdx.includes(d));}}
+piano.addEventListener('pointerdown',e=>{const k=e.target.closest('.w,.b');if(!k)return;e.preventDefault();input(+k.dataset.midi,'kbd');});
+function foldKey(m){const[lo,hi]=kbRange();const a=midiOf(lo),b=midiOf(hi);while(m<a)m+=12;while(m>b)m-=12;return m;}
+function flashKey(m,cls,ms=180){const k=keyEls[foldKey(m)];if(!k)return;if(cls==='bad'){k.classList.remove('bad');void k.offsetWidth;}k.classList.add(cls);if(ms)setTimeout(()=>k.classList.remove(cls),ms);}
+function hintKey(d){const k=keyEls[midiOf(d)];if(k)k.classList.add('hint');}
 function clearKeys(){Object.values(keyEls).forEach(k=>k.classList.remove('ok','hint'));}
 
 /* ---------- feedback ---------- */
@@ -365,64 +401,70 @@ function input(m,src){
   audio();
   if(src==='kbd'||src==='key')tone(m);
   flashKey(m,'down',220);
-  const t=ac?ac.currentTime-(src==='mic'?.07:0):0;
+  const t=ac?ac.currentTime-(src==='mic'?.1:0):0;
   if(S.mode==='read')readInput(m,src);else if(S.mode==='practice')practiceInput(m,src);else performInput(m,src,t);
 }
 const same=(m,target,src)=>src==='kbd'||src==='key'?m===target:((m-target)%12+12)%12===0;
 
 /* ---------- READ mode ---------- */
+const CLEFNAMES={treble:'高音譜',bass:'低音譜',grand:'雙手大譜表'};
+function clefChips(){return `<span class="sep"></span>`+Object.keys(CLEFNAMES).map(c=>`<button class="chip ${clefKey()===c?'on':''}" data-clef="${c}">${CLEFNAMES[c]}</button>`).join('');}
 function readSetup(){
-  $('sub').innerHTML=LEVELS.map((l,i)=>`<button class="chip ${i===S.lv&&!S.timed?'on':''}" data-lv="${i}">${l.name}</button>`).join('')+`<button class="chip ${S.timed?'on':''}" id="timedBtn">限時 60 秒</button><span class="sep"></span><button class="chip ${S.clef!=='bass'?'on':''}" data-clef="treble">高音譜</button><button class="chip ${S.clef==='bass'?'on':''}" data-clef="bass">低音譜</button>`;
+  if(S.lv>=levels().length)S.lv=0;
+  $('sub').innerHTML=levels().map((l,i)=>`<button class="chip ${i===S.lv&&!S.timed?'on':''}" data-lv="${i}">${l.name}</button>`).join('')+`<button class="chip ${S.timed?'on':''}" id="timedBtn">限時 60 秒</button>`+clefChips();
   bindClef();
   $('timedBtn').onclick=()=>{S.timed=true;save();enterMode('read');};
   $('sub').querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{S.lv=+b.dataset.lv;S.timed=false;save();enterMode('read');});
   $('beats').style.visibility='hidden';$('listenTxt').textContent='聽聽看';
   G.score=0;G.last=null;clearInterval(G.timer);
-  if(S.timed){G.left=60;G.timer=setInterval(()=>{G.left--;drawReadStars();if(G.left<=0){clearInterval(G.timer);G.target=null;markProg('timed_'+(S.clef||'treble'),G.score);let best=0;try{best=+localStorage.getItem('ng_best')||0;if(G.score>best)localStorage.setItem('ng_best',G.score);}catch(e){}
+  if(S.timed){G.left=60;G.timer=setInterval(()=>{G.left--;drawReadStars();if(G.left<=0){clearInterval(G.timer);G.target=null;markProg('timed_'+clefKey(),G.score);let best=0;const bk='ng_best_'+clefKey();try{best=+localStorage.getItem(bk)||0;if(G.score>best)localStorage.setItem(bk,G.score);}catch(e){}
     win(G.score>=20?3:G.score>=12?2:1,`60 秒答對 ${G.score} 個！`,G.score>best?'新紀錄！':`最高紀錄：${best} 個`,{});}},1000);}
   drawReadStars();readNext();
 }
 function drawReadStars(){if(S.timed){info(`剩下 <b style="color:#f4845f;font-size:18px;margin:0 3px">${G.left}</b> 秒　答對 ${G.score} 個`);return;}info(Array.from({length:10},(_,i)=>`<span style="opacity:${i<G.score?1:.18};display:flex">${starSvg()}</span>`).join(''));}
 function readNext(){
-  const pool=S.timed?LEVELS[2].idx:LEVELS[S.lv].idx;let i;do{i=pool[Math.floor(Math.random()*pool.length)];}while(pool.length>1&&i===G.last);
-  G.last=i;G.target=NOTES[i];G.wrong=0;G.busy=false;clearKeys();$('name').textContent='';say('這是哪一個音？');
-  drawRead('new');if(S.autoSnd&&sfxOn())setTimeout(()=>tone(mid(G.target),0,1.2,.3),300);
+  const L=levels();const pool=S.timed?L[L.length-1].idx:L[S.lv].idx;let d;do{d=pool[Math.floor(Math.random()*pool.length)];}while(pool.length>1&&d===G.last);
+  const c=clefKey();const staff=c==='bass'?'b':c==='treble'?'t':(d>7?'t':d<7?'b':(Math.random()<.5?'t':'b'));
+  G.last=d;G.target={d,staff};G.wrong=0;G.busy=false;clearKeys();$('name').textContent='';say('這是哪一個音？');
+  drawRead('new');if(S.autoSnd&&sfxOn())setTimeout(()=>tone(midiOf(d),0,1.2,.3),300);
 }
+function fitView(svg,wrap,w0,y0,h0){const cw=Math.max(1,wrap.clientWidth),ch=Math.max(1,wrap.clientHeight),sc=Math.min(ch/h0,cw/w0),W=cw/sc,H=ch/sc;svg.setAttribute('viewBox',`${-(W-w0)/2} ${y0-(H-h0)/2} ${W} ${H}`);return{W,H};}
 function drawRead(state){
-  const svg=$('staff'),wrap=$('staffwrap');svg.innerHTML='';
-  const cw=Math.max(1,wrap.clientWidth),ch=Math.max(1,wrap.clientHeight),sc=Math.min(ch/150,cw/400),W=cw/sc,H=ch/sc,ox=(W-400)/2;
-  svg.setAttribute('viewBox',`${-ox} ${28-(H-150)/2} ${W} ${H}`);
-  staffLines(svg,8,392);el('line',{x1:392,x2:392,y1:60,y2:140,stroke:'#5b4a36','stroke-width':2},svg);clef(svg,10);
-  if(!G.target)return;const n=G.target;
-  const g=drawNote(svg,250,n,1,state==='ok'?'#43b97f':noteColor(n));
-  if(state==='ok')addStar(svg,292,yOf(n.step)-22,30);
+  const svg=$('staff'),wrap=$('staffwrap');svg.innerHTML='';const grand=clefKey()==='grand';
+  fitView(svg,wrap,400,grand?30:28,grand?250:150);
+  allLines(svg,8,392);el('line',{x1:392,x2:392,y1:60,y2:grand?270:140,stroke:'#5b4a36','stroke-width':2},svg);
+  if(grand){el('line',{x1:8,x2:8,y1:60,y2:270,stroke:'#5b4a36','stroke-width':2},svg);}
+  drawClefs(svg,14);
+  if(!G.target)return;const t=G.target;const ly=localY(t.d,t.staff),oy=staffOff(t.staff);
+  const g=drawNoteY(svg,250,ly,oy,1,state==='ok'?'#43b97f':dColor(t.d));
+  if(state==='ok')addStar(svg,292,ly+oy-22,30);
   if(state==='new')g.animate([{opacity:0,transform:'translateY(-14px)'},{opacity:1,transform:'none'}],{duration:350,easing:'ease-out'});
 }
 function readInput(m,src){
-  if(!G.target||G.busy)return;
-  if(same(m,mid(G.target),src)){
-    G.busy=true;G.score++;earn(1);keyEls[G.target.midi].classList.add('ok');keyEls[G.target.midi].classList.remove('hint');
-    drawRead('ok');$('name').textContent=G.target.solfa;mood('happy');say(CHEERS[Math.floor(Math.random()*CHEERS.length)]);
-    popStar(S.kbd?keyEls[G.target.midi]:null);happy();drawReadStars();
+  if(!G.target||G.busy)return;const d=G.target.d;
+  if(same(m,midiOf(d),src)){
+    G.busy=true;G.score++;earn(1);const k=keyEls[midiOf(d)];if(k){k.classList.add('ok');k.classList.remove('hint');}
+    drawRead('ok');$('name').textContent=nameOf(d);mood('happy');say(CHEERS[Math.floor(Math.random()*CHEERS.length)]);
+    popStar(S.kbd?k:null);happy();drawReadStars();
     if(S.timed){setTimeout(()=>{if(S.mode==='read'&&G.left>0)readNext();},550);return;}
-    if(G.score>=10)markProg('read_'+(S.clef||'treble')+'_'+S.lv,1);
-    if(G.score>=10)setTimeout(()=>S.mode==='read'&&win(3,'拿到 10 顆星星！',S.lv<2?'要挑戰下一關嗎？':'Do 到高 Do 都會讀了！',{next:S.lv<2}),1100);
+    const more=S.lv<levels().length-1;
+    if(G.score>=10)markProg('read_'+clefKey()+'_'+S.lv,1);
+    if(G.score>=10)setTimeout(()=>S.mode==='read'&&win(3,'拿到 10 顆星星！',more?'要挑戰下一關嗎？':'這一組全部都會讀了！',{next:more}),1100);
     else setTimeout(()=>{if(S.mode==='read')readNext();},1400);
   }else{
     G.wrong++;flashKey(m,'bad',400);mood('oops');say(TRY[Math.min(G.wrong-1,2)]);
-    if(G.wrong>=2&&!S.timed)keyEls[G.target.midi].classList.add('hint');
+    if(G.wrong>=2&&!S.timed)hintKey(d);
   }
 }
 
 /* ---------- SONG staff ---------- */
 const BEAT=72,X0=70,FIXW=118;
 function songSetup(){
-  const so=curSong();
+  const L=songList();if(S.song>=L.length)S.song=0;const so=curSong();
   let h=S.mode==='rhythm'?['第1級','第2級 休止符','第3級 八分音符'].map((t,i)=>`<button class="chip ${i===(S.rlv||0)?'on':''}" data-r="${i}">${t}</button>`).join('')+`<button class="chip" id="newRhy">換一個</button>`
-   :SONGS.map((s,i)=>`<button class="chip ${i===S.song?'on':''}" data-s="${i}">${s.name}</button>`).join('')+(SONGS[S.song].random?`<button class="chip" id="newRhy">換一首</button>`:'')+`<span class="sep"></span><button class="chip ${S.clef!=='bass'?'on':''}" data-clef="treble">高音譜</button><button class="chip ${S.clef==='bass'?'on':''}" data-clef="bass">低音譜</button>`;
+   :L.map((s,i)=>`<button class="chip ${i===S.song?'on':''}" data-s="${i}">${s.name}</button>`).join('')+(L[S.song].random?`<button class="chip" id="newRhy">換一首</button>`:'')+clefChips();
   if(S.mode!=='practice')h+=`<span class="sep"></span>`+TEMPOS.map((t,i)=>`<button class="chip ${i===S.tempo?'on':''}" data-t="${i}">${t.name}</button>`).join('')+`<button class="chip go" id="playBtn"><svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z" fill="#fff"/></svg><span>開始</span></button>`;
-  $('sub').innerHTML=h;
-  bindClef();if(S.mode==='rhythm')$('sub').querySelectorAll('[data-clef],.sep:last-of-type').forEach(e=>{if(e.dataset.clef)e.remove();});
+  $('sub').innerHTML=h;bindClef();
   $('sub').querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{S.rlv=+b.dataset.r;G.rhy=null;save();enterMode('rhythm');});
   if($('newRhy'))$('newRhy').onclick=()=>{G.rhy=null;G.rand=null;enterMode(S.mode);};
   $('sub').querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{S.song=+b.dataset.s;save();enterMode(S.mode);});
@@ -430,81 +472,99 @@ function songSetup(){
   if($('playBtn'))$('playBtn').onclick=()=>G.running?stopPerform(true):startPerform();
   $('beats').style.visibility=S.mode!=='practice'?'visible':'hidden';beats(-1);
   $('listenTxt').textContent='聽示範';$('name').textContent='';
-  G.idx=0;G.wrong=0;G.res=so.notes.map(nt=>nt.rest?'rest':null);G.running=false;
+  G.idx=0;G.wrong=0;G.res=so.notes.map(nt=>nt.rest?'rest':null);G.running=false;G.got=new Set();
+  G.ev=[];so.notes.forEach((nt,i)=>{if(nt.rest)return;const last=G.ev[G.ev.length-1];if(last&&last.beat===nt.beat)last.idx.push(i);else G.ev.push({beat:nt.beat,idx:[i]});});
   renderSong();
-  if(S.mode==='practice'){say('跟著音符彈彈看！');info(`${so.name}　0 / ${so.notes.length}`);highlightPractice();}
-  else{say(S.mode==='rhythm'?'有音符的地方按一下！':'按「開始」，先聽 4 拍喔！');info(`${so.name}　每分鐘 ${bpm()} 拍`);setOffset(0);}
+  if(S.mode==='practice'){say(so.grand?'左手右手都要看喔！':'跟著音符彈彈看！');highlightPractice();}
+  else{say(S.mode==='rhythm'?'有音符的地方按一下！':'按「開始」，先聽 4 拍喔！');info(`${so.name}　每分鐘 ${bpm()} 拍`);setOffset(G.fixX-14-X0);}
 }
 function bpm(){return Math.round(curSong().tempo*TEMPOS[S.tempo].f);}
-function curSong(){if(S.mode==='rhythm')return G.rhy||(G.rhy=genRhythm());const so=SONGS[S.song];if(so.random)return G.rand||(G.rand=genMelody());return so;}
-function finalize(so){let b=0;so.notes.forEach(nt=>{nt.beat=b;b+=nt.dur;});so.total=b;return so;}
+function finalize(so){const tot={};so.notes.forEach(nt=>{const k=nt.staff||'t';tot[k]=tot[k]||0;nt.beat=tot[k];tot[k]+=nt.dur;});so.total=Math.max(...Object.values(tot));so.notes=so.notes.filter(n=>!(so.grand&&n.rest));so.notes.sort((a,b)=>a.beat-b.beat);return so;}
 const pick=a=>a[Math.floor(Math.random()*a.length)];
-function genMelody(){
-  const pats=[[1,1,1,1],[2,1,1],[1,1,2],[2,2],[1,1,1,1],[1,.5,.5,1,1]];const notes=[];let st=Math.floor(Math.random()*5);
-  for(let bar=0;bar<4;bar++){const pat=bar===3?pick([[1,1,2],[2,2],[1,1,1,1]]):pick(pats);
-    pat.forEach((d,i)=>{const last=bar===3&&i===pat.length-1;if(last)st=0;else{st+=pick([-2,-1,-1,1,1,2,0]);st=Math.max(0,Math.min(7,st));}notes.push({n:NOTES[st],dur:d});});}
-  return finalize({name:'隨機新曲',tempo:80,notes});
-}
+const MPATS=[[1,1,1,1],[2,1,1],[1,1,2],[2,2],[1,1,1,1],[1,.5,.5,1,1],[.5,.5,1,.5,.5,1]];
+function genLine(lo,hi,home,bars){const notes=[];let st=lo+Math.floor(Math.random()*(hi-lo-2));
+  for(let bar=0;bar<bars;bar++){const pat=bar===bars-1?pick([[1,1,2],[2,2],[1,1,1,1]]):pick(MPATS);
+    pat.forEach((d,i)=>{const last=bar===bars-1&&i===pat.length-1;if(last)st=home;else{st+=pick([-2,-1,-1,1,1,2,0]);st=Math.max(lo,Math.min(hi,st));}notes.push({d:st,dur:d});});}return notes;}
+function genMelody(){const bass=clefKey()==='bass';const notes=genLine(bass?0:7,bass?7:14,bass?0:7,4).map(n=>({...n,staff:bass?'b':'t'}));return finalize({name:'隨機新曲',tempo:80,notes});}
+function genGrand(){const notes=[];for(let bar=0;bar<4;bar++){const right=bar%2===0;const ln=genLine(right?7:0,right?12:7,right?7:7,1);
+  ln.forEach(n=>notes.push({...n,staff:right?'t':'b'}));notes.push({rest:true,dur:4,staff:right?'b':'t'});}
+  return finalize({name:'隨機雙手',tempo:80,notes,grand:true});}
 const RPAT=[[[1,1,1,1],[2,1,1],[1,1,2],[2,2],[4],[1,1,1,1]],
  [[1,'r',1,1],[2,'r',1],[1,1,'r',1],[1,1,2],['r',1,1,1],[1,1,1,'r']],
  [[.5,.5,1,1,1],[1,.5,.5,1,1],[.5,.5,.5,.5,2],[1,1,.5,.5,1],[1,'r',.5,.5,1],[.5,.5,1,'r',1]]];
 function genRhythm(){const lv=S.rlv||0;const notes=[];for(let bar=0;bar<4;bar++){let pool=[...RPAT[0]];for(let k=1;k<=lv;k++)pool=pool.concat(RPAT[k],RPAT[k]);
-  pick(pool).forEach(d=>notes.push(d==='r'?{n:null,rest:true,dur:1}:{n:BYID.B4,dur:d}));}
+  pick(pool).forEach(d=>notes.push(d==='r'?{rest:true,dur:1}:{d:13,dur:d}));}
   return finalize({name:'節奏',tempo:80,notes,rhythm:true});}
 function renderSong(){
-  const so=curSong(),svg=$('staff'),wrap=$('staffwrap');
+  const so=curSong(),svg=$('staff'),wrap=$('staffwrap');const grand=!!so.grand;
+  const H0=grand?290:150,Y0=grand?22:28;
   const cw=Math.max(1,wrap.clientWidth),ch=Math.max(1,wrap.clientHeight);
-  const sc=Math.min(ch/150,cw/(cw<520?360:640)),W=cw/sc,H=ch/sc;G.W=W;
-  svg.setAttribute('viewBox',`0 ${28-(H-150)/2} ${W} ${H}`);svg.innerHTML='';
-  const len=X0+so.total*BEAT+40;
+  const sc=Math.min(ch/H0,cw/(cw<520?360:(grand?560:640))),W=cw/sc,H=ch/sc;G.W=W;
+  svg.setAttribute('viewBox',`0 ${Y0-(H-H0)/2} ${W} ${H}`);svg.innerHTML='';
+  const len=X0+so.total*BEAT+40;const top=60,bot=grand?270:140;
   const scroll=el('g',{},svg);G.scroll=scroll;
-  G.hl=el('rect',{x:-30,y:30,width:56,height:150,rx:16,fill:'#fff1c2',opacity:0},scroll);
-  if(so.rhythm)el('line',{x1:-50,x2:len+W,y1:100,y2:100,stroke:'#5b4a36','stroke-width':2},scroll);else staffLines(scroll,-50,len+W);
+  G.hl=el('rect',{x:-30,y:top-30,width:56,height:bot-top+60,rx:16,fill:'#fff1c2',opacity:0},scroll);
+  if(so.rhythm)el('line',{x1:-50,x2:len+W,y1:100,y2:100,stroke:'#5b4a36','stroke-width':2},scroll);else allLines(scroll,-50,len+W);
   G.ng=[];
-  const by1=so.rhythm?80:60,by2=so.rhythm?120:140;
+  const by1=so.rhythm?80:top,by2=so.rhythm?120:bot;
   for(let b=4;b<so.total;b+=4){const x=X0+b*BEAT-26;el('line',{x1:x,x2:x,y1:by1,y2:by2,stroke:'#5b4a36','stroke-width':2},scroll);}
-  const ex=X0+so.total*BEAT-10;el('line',{x1:ex,x2:ex,y1:60,y2:140,stroke:'#5b4a36','stroke-width':2},scroll);el('rect',{x:ex+5,y:60,width:6,height:80,fill:'#5b4a36'},scroll);
+  const ex=X0+so.total*BEAT-10;el('line',{x1:ex,x2:ex,y1:by1,y2:by2,stroke:'#5b4a36','stroke-width':2},scroll);el('rect',{x:ex+5,y:by1,width:6,height:by2-by1,fill:'#5b4a36'},scroll);
+  // beams: pair of eighths starting on a beat, same staff
+  const beamOf={};so.notes.forEach((nt,i)=>{if(nt.rest||nt.dur!==.5||nt.beat%1!==0)return;const j=so.notes.findIndex((m,k)=>k>i&&!m.rest&&m.dur===.5&&m.beat===nt.beat+.5&&m.staff===nt.staff);if(j>0){beamOf[i]={pair:j,first:true};beamOf[j]={pair:i,first:false};}});
   so.notes.forEach((nt,i)=>{const x=X0+nt.beat*BEAT;let g;
-    if(nt.rest){g=el('g',{style:'--c:#4a3b2a'},scroll);el('path',{class:'nf',d:`M${x-4} 76l9 11-6 8 8 11c-6-3-11-1-8 6-8-6-6-12 0-11l-9-11 7-7-4-5z`},g);}
-    else g=so.rhythm?drawNote(scroll,x,{step:4},nt.dur,'#4a3b2a',true):drawNote(scroll,x,nt.n,nt.dur,noteColor(nt.n));
-    G.ng.push({g,x});});
+    if(nt.rest){if(grand){G.ng.push(null);return;}g=el('g',{style:'--c:#4a3b2a'},scroll);el('path',{class:'nf',d:`M${x-4} 76l9 11-6 8 8 11c-6-3-11-1-8 6-8-6-6-12 0-11l-9-11 7-7-4-5z`},g);}
+    else{const ly=so.rhythm?100:localY(nt.d,nt.staff),oy=so.rhythm?0:staffOff(nt.staff);const o={rhythm:so.rhythm};const bm=beamOf[i];
+      if(bm){const a=bm.first?nt:so.notes[bm.pair],b=bm.first?so.notes[bm.pair]:nt;const la=so.rhythm?100:localY(a.d,a.staff),lb=so.rhythm?100:localY(b.d,b.staff);
+        const up=so.rhythm||(la+lb)/2>100;o.up=up;o.noFlag=true;
+        // beam line: straight between stem tips, at the extreme
+        const tipA=up?Math.min(la,lb)-68:Math.max(la,lb)+68;o.stemLen=Math.abs(ly-tipA);
+        if(bm.first){const xa=x+(up?12.5:-12.5),xb=X0+b.beat*BEAT+(up?12.5:-12.5);const ty=tipA+oy;
+          G.beams=G.beams||[];G.beams.push({i,j:bm.pair,d:`M${xa-1.5} ${ty-(up?0:6)}L${xb+1.5} ${ty-(up?0:6)}L${xb+1.5} ${ty+(up?7:1)}L${xa-1.5} ${ty+(up?7:1)}z`});}}
+      g=drawNoteY(scroll,x,ly,oy,nt.dur,so.rhythm?'#4a3b2a':dColor(nt.d),o);}
+    G.ng.push({g,x,y:(so.rhythm?100:localY(nt.d,nt.staff)+staffOff(nt.staff))||100});});
+  (G.beams||[]).forEach(bm=>{const gA=G.ng[bm.i].g;el('path',{class:'nf',d:bm.d},gA);});G.beams=[];
   G.marks=el('g',{},scroll);
-  el('rect',{x:0,y:-500,width:FIXW,height:1200,fill:'#fff'},svg);
-  el('rect',{x:FIXW,y:-500,width:20,height:1200,fill:'url(#fade)'},svg);
+  el('rect',{x:0,y:-500,width:FIXW,height:1500,fill:'#fff'},svg);
+  el('rect',{x:FIXW,y:-500,width:20,height:1500,fill:'url(#fade)'},svg);
   const defs=el('defs',{},svg);const lg=el('linearGradient',{id:'fade'},defs);el('stop',{offset:0,'stop-color':'#fff'},lg);el('stop',{offset:1,'stop-color':'#fff','stop-opacity':0},lg);
-  if(so.rhythm){el('line',{x1:6,x2:FIXW,y1:100,y2:100,stroke:'#5b4a36','stroke-width':2},svg);el('rect',{x:24,y:84,width:7,height:32,fill:'#4a3b2a'},svg);el('rect',{x:37,y:84,width:7,height:32,fill:'#4a3b2a'},svg);}else{staffLines(svg,6,FIXW);clef(svg,8);}
+  if(so.rhythm){el('line',{x1:6,x2:FIXW,y1:100,y2:100,stroke:'#5b4a36','stroke-width':2},svg);el('rect',{x:24,y:84,width:7,height:32,fill:'#4a3b2a'},svg);el('rect',{x:37,y:84,width:7,height:32,fill:'#4a3b2a'},svg);}
+  else{allLines(svg,6,FIXW);drawClefs(svg,10);if(grand)el('line',{x1:6,x2:6,y1:60,y2:270,stroke:'#5b4a36','stroke-width':3},svg);}
   const ts=el('g',{'font-family':'Georgia,serif','font-weight':900,'font-size':44,fill:'#4a3b2a','text-anchor':'middle'},svg);
-  el('text',{x:92,y:97},ts).textContent='4';el('text',{x:92,y:137},ts).textContent='4';
-  G.head=el('line',{x1:0,x2:0,y1:38,y2:178,stroke:'#f4845f','stroke-width':4,'stroke-linecap':'round',opacity:S.mode!=='practice'?.8:0},svg);
+  [0].concat(grand?[GOFF]:[]).forEach(o=>{el('text',{x:92,y:97+o},ts).textContent='4';el('text',{x:92,y:137+o},ts).textContent='4';});
+  G.head=el('line',{x1:0,x2:0,y1:top-22,y2:bot+38,stroke:'#f4845f','stroke-width':4,'stroke-linecap':'round',opacity:S.mode!=='practice'?.8:0},svg);
   G.fixX=Math.max(FIXW+70,W*.36);G.head.setAttribute('x1',G.fixX-14);G.head.setAttribute('x2',G.fixX-14);
+  G.markY=bot+60;
   G.res.forEach((r,i)=>r&&r!=='rest'&&markNote(i,r,true));
 }
 function setOffset(px,anim){G.off=px;G.scroll.style.transition=anim?'transform .35s ease':'none';G.scroll.style.transform=`translateX(${px}px)`;}
 function markNote(i,r,silent){const ng=G.ng[i];if(!ng)return;const col=r==='bad'||r==='miss'?'#e5626a':r==='good'?'#7cc58f':'#43b97f';ng.g.style.setProperty('--c',col);
   if(r==='perfect'||r==='done')addStar(G.marks,ng.x+2,34,22);
-  if(!silent&&S.mode==='perform'){const t=el('text',{x:ng.x,y:200,'text-anchor':'middle','font-size':17,'font-weight':900,fill:col},G.marks);t.textContent=r==='perfect'?'很準！':r==='good'?'不錯':'錯過';t.animate([{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:250});}}
+  if(!silent&&S.mode!=='practice'){const t=el('text',{x:ng.x,y:G.markY,'text-anchor':'middle','font-size':17,'font-weight':900,fill:col},G.marks);t.textContent=r==='perfect'?'很準！':r==='good'?'不錯':'錯過';t.animate([{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:250});}}
 
 /* ---------- PRACTICE ---------- */
 function highlightPractice(){
-  const so=curSong();if(G.idx>=so.notes.length)return;const ng=G.ng[G.idx];
-  G.hl.setAttribute('x',ng.x-28);G.hl.setAttribute('opacity',1);
-  setOffset(G.fixX-ng.x,true);clearKeys();G.wrong=0;
-  $('name').textContent='';info(`${so.name}　${G.idx} / ${so.notes.length}`);
+  const so=curSong();if(G.idx>=G.ev.length)return;const ev=G.ev[G.idx];const x=X0+ev.beat*BEAT;
+  G.hl.setAttribute('x',x-28);G.hl.setAttribute('opacity',1);G.got=new Set();
+  setOffset(G.fixX-x,true);clearKeys();G.wrong=0;
+  $('name').textContent='';info(`${so.name}　${G.idx} / ${G.ev.length}`+(ev.idx.length>1?'　<span style="color:#f4845f">兩個音一起彈！</span>':''));
 }
 function practiceInput(m,src){
   if(src!=='kbd'&&src!=='key'&&performance.now()-(G.advT||0)<300)return;
-  const so=curSong();if(G.idx>=so.notes.length)return;const nt=so.notes[G.idx];
-  if(same(m,mid(nt.n),src)){
-    G.res[G.idx]='done';markNote(G.idx,'done');$('name').textContent=nt.n.solfa;
-    if(G.idx%4===3||G.idx===so.notes.length-1){mood('happy');say(CHEERS[Math.floor(Math.random()*CHEERS.length)]);}else say('對！下一個～');
+  const so=curSong();if(G.idx>=G.ev.length)return;const ev=G.ev[G.idx];
+  const hit=ev.idx.find(i=>!G.got.has(i)&&same(m,midiOf(so.notes[i].d),src));
+  if(hit!=null){
+    G.got.add(hit);G.res[hit]='done';markNote(hit,'done');$('name').textContent=nameOf(so.notes[hit].d);
+    if(G.got.size<ev.idx.length){say('還有另一個音！');return;}
+    if(G.idx%4===3||G.idx===G.ev.length-1){mood('happy');say(CHEERS[Math.floor(Math.random()*CHEERS.length)]);}else say('對！下一個～');
     G.idx++;G.advT=performance.now();
-    if(G.idx>=so.notes.length){earn(3);markProg('prac_'+so.name+(S.clef==='bass'?'_b':''),1);G.hl.setAttribute('opacity',0);info(`${so.name}　完成！`);happy();setTimeout(()=>win(3,`彈完〈${so.name}〉了！`,'聽聽看整首曲子，然後試試演奏模式吧',{replay:true,next:true}),700);}
+    if(G.idx>=G.ev.length){earn(3);markProg('prac_'+so.name+'_'+clefKey(),1);G.hl.setAttribute('opacity',0);info(`${so.name}　完成！`);happy();setTimeout(()=>win(3,`彈完〈${so.name}〉了！`,'聽聽看整首曲子，然後試試演奏模式吧',{replay:true,next:true}),700);}
     else highlightPractice();
-  }else{G.wrong++;flashKey(m,'bad',400);mood('oops');say(TRY[Math.min(G.wrong-1,2)]);if(G.wrong>=2)keyEls[nt.n.midi].classList.add('hint');}
+  }else if(ev.idx.some(i=>G.got.has(i)&&same(m,midiOf(so.notes[i].d),src))){/* repeat of already-got note in chord: ignore */}
+  else{G.wrong++;flashKey(m,'bad',400);mood('oops');say(TRY[Math.min(G.wrong-1,2)]);if(G.wrong>=2)ev.idx.filter(i=>!G.got.has(i)).forEach(i=>hintKey(so.notes[i].d));}
 }
 function playSong(so,tempoBpm){
   const a=audio();const b=newBus();const spb=60/tempoBpm;const t0=a.currentTime+.2;
-  so.notes.forEach(nt=>nt.n&&tone(mid(nt.n),0,Math.max(.5,nt.dur*spb*1.1),.3,b,t0+nt.beat*spb));
+  so.notes.forEach(nt=>{if(nt.rest)return;if(so.rhythm)click(t0+nt.beat*spb,false,b);else tone(midiOf(nt.d),0,Math.max(.5,nt.dur*spb*1.1),.3,b,t0+nt.beat*spb);});
   return {t0,spb};
 }
 
@@ -513,15 +573,15 @@ function startPerform(){
   const a=audio();stopPerform();const so=curSong();
   G.res=so.notes.map(nt=>nt.rest?'rest':null);renderSong();
   const spb=60/bpm();const b=newBus();const t0=a.currentTime+.35;const st=t0+4*spb;
-  if(S.met)for(let k=0;k<4+so.total;k++)click(t0+k*spb,k%4===0,b);
+  if(S.met&&!mic.on)for(let k=0;k<4+so.total;k++)click(t0+k*spb,k%4===0,b);
   else for(let k=0;k<4;k++)click(t0+k*spb,k===0,b);
-  if(S.mel&&!mic.on&&!so.rhythm)so.notes.forEach(nt=>nt.n&&tone(mid(nt.n),0,Math.max(.4,nt.dur*spb*.95),.22,b,st+nt.beat*spb));
+  if(S.mel&&!mic.on&&!so.rhythm)so.notes.forEach(nt=>!nt.rest&&tone(midiOf(nt.d),0,Math.max(.4,nt.dur*spb*.95),.22,b,st+nt.beat*spb));
   G.spb=spb;G.st=st;G.running=true;G.lastBeat=-99;
   $('playBtn').querySelector('span').textContent='停止';
   const loop=()=>{if(!G.running)return;const bt=(ac.currentTime-G.st)/G.spb;
     setOffset(G.fixX-14-(X0+bt*BEAT));
     const whole=Math.floor(bt);if(whole!==G.lastBeat){G.lastBeat=whole;if(bt>=-4)beats(((whole%4)+4)%4);
-      if(bt<0&&bt>=-4)say(['預備…1','2','3','4'][whole+4]||'');else if(whole===0)say('開始彈！');}
+      if(bt<0&&bt>=-4)say(['預備…1','2','3','4'][whole+4]||'');else if(whole===0)say('開始！');}
     so.notes.forEach((nt,i)=>{if(!G.res[i]&&bt>nt.beat+.5){G.res[i]='miss';markNote(i,'miss');}});
     if(bt>so.total+.5){finishPerform();return;}
     G.raf=requestAnimationFrame(loop);};
@@ -530,14 +590,13 @@ function startPerform(){
 function stopPerform(manual){G.running=false;cancelAnimationFrame(G.raf);stopBus();beats(-1);if($('playBtn'))$('playBtn').querySelector('span').textContent='開始';if(manual){say('按「開始」再來一次！');}}
 function performInput(m,src,t){
   if(!G.running)return;const so=curSong();const bt=(t-G.st)/G.spb;
-  let best=-1,bd=9;so.notes.forEach((nt,i)=>{if(G.res[i])return;const d=Math.abs(bt-nt.beat);if(d<.5&&d<bd){bd=d;best=i;}});
-  if(best<0)return;
-  if(so.rhythm||same(m,mid(so.notes[best].n),src)){const r=bd<.22?'perfect':'good';G.res[best]=r;markNote(best,r);if(r==='perfect')mood('happy');}
-  else{flashKey(m,'bad',400);mood('oops');}
+  let best=-1,bd=9,near=false;so.notes.forEach((nt,i)=>{if(G.res[i])return;const d=Math.abs(bt-nt.beat);if(d>=.5)return;near=true;if((so.rhythm||same(m,midiOf(nt.d),src))&&d<bd){bd=d;best=i;}});
+  if(best>=0){const r=bd<.22?'perfect':'good';G.res[best]=r;markNote(best,r);if(r==='perfect')mood('happy');}
+  else if(near){flashKey(m,'bad',400);mood('oops');}
 }
 function finishPerform(){
   stopPerform();const so=curSong();const p=G.res.filter(r=>r==='perfect').length,g=G.res.filter(r=>r==='good').length,tot=G.res.filter(r=>r!=='rest').length;
-  const ratio=(p+g*.6)/tot;const stars=ratio>=.85?3:ratio>=.55?2:1;earn(stars);markProg(so.rhythm?'rhy_'+(S.rlv||0):'perf_'+so.name+(S.clef==='bass'?'_b':''),stars);
+  const ratio=(p+g*.6)/tot;const stars=ratio>=.85?3:ratio>=.55?2:1;earn(stars);markProg(so.rhythm?'rhy_'+(S.rlv||0):'perf_'+so.name+'_'+clefKey(),stars);
   info(`很準 ${p}　不錯 ${g}　錯過 ${tot-p-g}`);say(stars===3?'太棒了！':'彈完了！');
   win(stars,stars===3?'拍子好準！':stars===2?'很不錯喔！':'彈完了，好棒！',`很準 ${p} 個、不錯 ${g} 個`+(stars<3&&S.tempo>0?'，可以先選「慢」試試':''),{next:true});
 }
@@ -551,16 +610,16 @@ function enterMode(m){
   if(m==='read')readSetup();else songSetup();
 }
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{audio();enterMode(t.dataset.m);});
-$('listen').onclick=()=>{audio();if(S.mode==='read'){if(G.target)tone(mid(G.target),0,1.2,.3);}else{stopPerform();playSong(curSong(),curSong().tempo);}};
+$('listen').onclick=()=>{audio();if(S.mode==='read'){if(G.target)tone(midiOf(G.target.d),0,1.2,.3);}else{stopPerform();playSong(curSong(),curSong().tempo);}};
 $('go').onclick=()=>{audio();showPicker();};
 $('again').onclick=()=>{$('win').classList.add('hide');enterMode(S.mode);};
 $('replay').onclick=()=>{playSong(curSong(),curSong().tempo);};
 $('nextBtn').onclick=()=>{$('win').classList.add('hide');
-  if(S.mode==='read'){S.lv=Math.min(2,S.lv+1);enterMode('read');}
+  if(S.mode==='read'){S.lv=Math.min(levels().length-1,S.lv+1);enterMode('read');}
   else if(S.mode==='practice'){enterMode('perform');}
   else if(S.mode==='rhythm'){G.rhy=null;enterMode('rhythm');}
-  else{S.song=(S.song+1)%SONGS.length;G.rand=null;enterMode('perform');}};
-window.addEventListener('resize',()=>{if(S.mode==='read'){if(G.target)drawRead(G.busy?'ok':'');return;}if(G.ng){const keep=G.idx;renderSong();if(S.mode==='practice'){G.idx=keep;highlightPractice();}else if(!G.running)setOffset(0);}});
+  else{S.song=(S.song+1)%songList().length;G.rand=null;enterMode('perform');}};
+window.addEventListener('resize',()=>{if(S.mode==='read'){if(G.target)drawRead(G.busy?'ok':'');return;}if(G.ng){const keep=G.idx;renderSong();if(S.mode==='practice'){G.idx=keep;highlightPractice();}else if(!G.running)setOffset(G.fixX-14-X0);}});
 
 /* settings */
 function chipRow(id,get,set){const row=$(id);const sync=()=>row.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.v===String(get())));
@@ -577,7 +636,7 @@ $('kbdBtn').onclick=()=>{S.kbd=!S.kbd;save();refreshKeys();setTimeout(()=>window
 
 /* computer keys */
 const KB={a:60,s:62,d:64,f:65,g:67,h:69,j:71,k:72,w:61,e:63,t:66,y:68,u:70};
-window.addEventListener('keydown',e=>{if(e.repeat)return;const m=KB[e.key.toLowerCase()];if(m)input(m+off(),'key');});
+window.addEventListener('keydown',e=>{if(e.repeat)return;const m=KB[e.key.toLowerCase()];if(m)input(m-60+midiOf(kbRange()[0]),'key');});
 
 /* MIDI */
 try{if(navigator.requestMIDIAccess)navigator.requestMIDIAccess().then(acc=>{const hook=i=>i.onmidimessage=ev=>{const[s,n,v]=ev.data;if((s&0xf0)===0x90&&v>0){if(sfxOn())tone(n,0,1,.25);input(n,'midi');}};acc.inputs.forEach(hook);acc.onstatechange=e=>{if(e.port.type==='input'&&e.port.state==='connected')hook(e.port);};}).catch(()=>{});}catch(e){}
@@ -622,7 +681,7 @@ function micLoop(){
   const gap=now-(mic.lastT||0);
   if(rms>.02&&rms>minR*2.5&&gap>.25&&(mic.lastT==null||mic.lastT===0||mic.trough<mic.peak*.55)&&rms>mic.trough*2){mic.armed=true;}
   if(S.mode==='rhythm'){if(mic.armed&&rms>.03){mic.armed=false;mic.lastT=now;mic.peak=rms;mic.trough=rms;input(71,'mic');}mic.raf=requestAnimationFrame(micLoop);return;}
-  let m=-1;if(f>70&&f<2200)m=Math.round(69+12*Math.log2(f/440));
+  let m=-1;if(f>60&&f<1150)m=Math.round(69+12*Math.log2(f/440));
   if(m>0&&m===mic.cand)mic.cnt++;else{mic.cand=m;mic.cnt=1;}
   const newPc=mic.lastEmit==null||((m-mic.lastEmit)%12+12)%12!==0;
   if(m>0&&mic.cnt>=3&&(mic.armed||(newPc&&gap>.15))){
@@ -695,9 +754,10 @@ $('endNext').onclick=()=>showPicker();
 $('endAlbum').onclick=()=>{$('ended').classList.add('hide');showAlbum();};
 $('endMore').onclick=()=>askPin(()=>{G.sess.left=120;$('ended').classList.add('hide');tick();});
 $('studBtn').onclick=()=>{if(CUR)showAlbum();};
-function progHtml(st){const P=st.prog||{};const lab=[];
-  ['treble','bass'].forEach(c=>{const cn=c==='bass'?'低音':'高音';LEVELS.forEach((l,i)=>lab.push([`${cn} ${l.name.split(' ')[0]}`,P[`read_${c}_${i}`]]));if(P['timed_'+c])lab.push([`${cn}限時最高 ${P['timed_'+c]} 個`,1]);});
-  SONGS.filter(x=>!x.random).forEach(so=>{lab.push([`練習〈${so.name}〉`,P['prac_'+so.name]]);if(P['perf_'+so.name])lab.push([`演奏〈${so.name}〉${P['perf_'+so.name]} 星`,1]);});
+function progHtml(st){const P=st.prog||{};const lab=[];const CN={treble:'高音',bass:'低音',grand:'雙手'};
+  Object.keys(LV).forEach(c=>{LV[c].forEach((l,i)=>lab.push([`${CN[c]} ${l.name.split(' ')[0]}`,P[`read_${c}_${i}`]||(c==='treble'&&P[`read_treble_${i}`])]));if(P['timed_'+c])lab.push([`${CN[c]}限時最高 ${P['timed_'+c]} 個`,1]);});
+  const songs=[];SONGS.forEach(so=>{if(!so.random)['treble','bass'].forEach(c=>songs.push([so.name,c]));});GSONGS.forEach(so=>{if(!so.random)songs.push([so.name,'grand']);});
+  songs.forEach(([n,c])=>{const pr=P[`prac_${n}_${c}`]||(c==='treble'&&P['prac_'+n]),pf=P[`perf_${n}_${c}`]||(c==='treble'&&P['perf_'+n]);if(pr||pf||c!=='bass')lab.push([`${c==='bass'?'低音':''}〈${n}〉${pf?` 演奏${pf}星`:''}`,pr||pf]);});
   [0,1,2].forEach(i=>{if(P['rhy_'+i])lab.push([`節奏第${i+1}級 ${P['rhy_'+i]} 星`,1]);});
   return lab.map(([t,d])=>`<span class="pc ${d?'done':''}">${d?'✓ ':''}${t}</span>`).join('');}
 function showAlbum(){const st=CUR;$('albumTitle').textContent=`${st.name} 的貼紙簿`;
