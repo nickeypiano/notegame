@@ -419,7 +419,7 @@ const CHEERS=['答對了！','好棒！','太厲害了！','好聰明！','就�
 const TRY=['再試試看～','再找找看！','差一點點！'];
 const TEMPOS=[{name:'慢',f:0.7},{name:'中',f:0.85},{name:'快',f:1}];
 
-let S={kbd:false,lab:'none',color:false,autoSnd:true,mel:true,met:true,lv:0,song:0,tempo:0,mode:'read',clef:'treble'};
+let S={kbd:false,lab:'none',color:false,autoSnd:true,mel:false,met:true,lv:0,song:0,tempo:0,mode:'read',clef:'treble'};
 try{Object.assign(S,JSON.parse(localStorage.getItem('notegame3')||'{}'));}catch(e){}
 function save(){try{localStorage.setItem('notegame3',JSON.stringify(S));}catch(e){}}
 let G={};
@@ -482,7 +482,8 @@ function refreshKeys(){const[lo,hi]=kbRange();if(G.kbKey!==lo+'-'+hi+S.clef)buil
   piano.classList.toggle('showColor',S.color);piano.classList.toggle('hide',!S.kbd);$('kbdBtn').classList.toggle('live',S.kbd);
   const lvIdx=S.mode==='read'&&!S.timed?(levels()[S.lv]||levels()[0]).idx:null;
   for(let d=lo;d<=hi;d++){const k=keyEls[midiOf(d)];k.querySelector('.lab').textContent=S.lab==='solfa'?nameOf(d):S.lab==='abc'?LETTER[d%7]:'';k.classList.toggle('off',!!lvIdx&&!lvIdx.includes(d));}}
-piano.addEventListener('pointerdown',e=>{const k=e.target.closest('.w,.b');if(!k)return;e.preventDefault();input(+k.dataset.midi,'kbd');});
+piano.addEventListener('pointerdown',e=>{const k=e.target.closest('.w,.b');if(!k)return;e.preventDefault();const m=+k.dataset.midi,now=performance.now();if(G.lastKey===m&&now-G.lastKeyT<120)return;G.lastKey=m;G.lastKeyT=now;G.kbdT=now;input(m,'kbd');});
+piano.addEventListener('contextmenu',e=>e.preventDefault());
 function foldKey(m){const[lo,hi]=kbRange();const a=midiOf(lo),b=midiOf(hi);while(m<a)m+=12;while(m>b)m-=12;return m;}
 function flashKey(m,cls,ms=180){const k=keyEls[foldKey(m)];if(!k)return;if(cls==='bad'){k.classList.remove('bad');void k.offsetWidth;}k.classList.add(cls);if(ms)setTimeout(()=>k.classList.remove(cls),ms);}
 function hintKey(d){const k=keyEls[midiOf(d)];if(k)k.classList.add('hint');}
@@ -838,6 +839,7 @@ function micLoop(){
   if(S.mode==='rhythm'){if(mic.armed&&rms>.03){mic.armed=false;mic.lastT=now;mic.peak=rms;mic.trough=rms;input(71,'mic');}mic.raf=requestAnimationFrame(micLoop);return;}
   let m=-1;if(f>60&&f<1150)m=Math.round(69+12*Math.log2(f/440));
   if(m>0&&m===mic.cand)mic.cnt++;else{mic.cand=m;mic.cnt=1;}
+  if(performance.now()-(G.kbdT||0)<600){mic.raf=requestAnimationFrame(micLoop);return;}
   const newPc=mic.lastEmit==null||((m-mic.lastEmit)%12+12)%12!==0;
   if(m>0&&mic.cnt>=3&&(mic.armed||(newPc&&gap>.15))){
     mic.armed=false;mic.lastT=now;mic.peak=rms;mic.trough=rms;mic.lastEmit=m;$('heard').textContent=SOLFA[m%12];input(m,'mic');
