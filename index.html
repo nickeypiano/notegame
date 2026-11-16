@@ -152,6 +152,29 @@ body{background:radial-gradient(circle at 15% 10%,#fff3dc 0,transparent 40%),rad
 .stkc svg{width:120px;height:120px}.stkc b{font-size:18px;color:#4a3b2a}.stkc.big1{width:200px}.stkc.big1 svg{width:170px;height:170px}
 .book{display:grid;grid-template-columns:repeat(auto-fill,minmax(78px,1fr));gap:8px}.bk{display:flex;flex-direction:column;align-items:center;font-size:11px;color:#8a7a66}.bk svg{width:70px;height:70px}
 @media (max-height:540px){.stkc{width:120px;padding:8px}.stkc svg{width:90px;height:90px}}
+.booktitle{font-size:26px;font-weight:900;margin:4px 0}.booktitle span{font-size:17px;color:#a07f56;margin-left:6px}
+.btabs{display:flex;gap:4px;flex-wrap:wrap;justify-content:center;max-width:900px;margin-bottom:-2px;position:relative;z-index:1}
+.btab{border:none;font-family:inherit;font-weight:800;font-size:14px;padding:6px 12px 8px;border-radius:12px 12px 0 0;background:#efe2cc;color:#8a6a43;cursor:pointer}
+.btab.on{background:var(--tc);color:#fff}
+.bookwrap{width:min(960px,96vw);background:#a9714b;border-radius:18px;padding:10px;box-shadow:0 8px 0 #7d5235,0 12px 30px rgba(0,0,0,.15)}
+.bpages{display:flex;background:#fffaf0;border-radius:10px;min-height:min(440px,58vh);position:relative;overflow:hidden}
+.bpage{flex:1;padding:14px 16px;background:linear-gradient(90deg,#fffaf0,#fff6e6);display:flex;flex-direction:column}
+.bpage:last-child{background:linear-gradient(270deg,#fffaf0,#fff6e6)}
+.spine{width:16px;background:linear-gradient(90deg,#ead9bd,#d9c4a0 50%,#ead9bd);box-shadow:inset 0 0 6px rgba(0,0,0,.12)}
+.bhead{font-size:22px;font-weight:900;display:flex;align-items:baseline;gap:8px;border-bottom:2px dashed #ecd8b6;padding-bottom:6px;margin-bottom:8px}.bhead span{font-size:14px;color:#b8a68c}
+.bgrid{display:grid;grid-template-columns:repeat(auto-fill,minmax(92px,1fr));gap:8px;align-content:start}
+.bslot{display:flex;flex-direction:column;align-items:center;position:relative;font-size:13px;color:#c9b79c}
+.bslot svg{width:84px;height:84px;filter:grayscale(1) brightness(1.15);opacity:.28}
+.bslot.got svg{filter:drop-shadow(0 3px 0 rgba(0,0,0,.12));opacity:1;transform:rotate(-4deg)}
+.bslot.got:nth-child(2n) svg{transform:rotate(5deg)}.bslot.got b{color:#4a3b2a}
+.bslot i{position:absolute;top:0;right:8px;background:#f4845f;color:#fff;font-style:normal;font-weight:800;font-size:12px;border-radius:999px;padding:0 6px}
+.bend{margin:auto;text-align:center;font-size:20px;font-weight:800;color:#c9a97a;line-height:1.7}
+.bnav{display:flex;align-items:center;gap:14px;margin:10px 0 2px;font-weight:800;color:#a07f56}.bnav .chip:disabled{opacity:.35}
+.recp{background:#fdf0dc;border-radius:999px;padding:1px 9px;margin-left:6px;font-size:13px;color:#b0703a}.recp.hot{background:#e5626a;color:#fff}
+.rank{background:#fff;border-radius:14px;padding:8px 14px;margin:10px 0;box-shadow:0 2px 0 #ecd8b6;min-width:240px;text-align:left}
+.rrow{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:16px}.rrow b{width:18px;color:#c9a97a}.rrow em{margin-left:auto;font-style:normal;font-weight:800}
+.rrow .av{width:24px;height:24px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900}.rrow.me{color:#f4845f;font-weight:800}
+@media (max-height:540px){.bpages{min-height:0}.bslot svg{width:60px;height:60px}.bgrid{grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:4px}.booktitle{font-size:20px}.bhead{font-size:17px}}
 </style>
 </head>
 <body>
@@ -246,6 +269,13 @@ body{background:radial-gradient(circle at 15% 10%,#fff3dc 0,transparent 40%),rad
   <div style="font-size:18px" id="stkSong"></div>
   <div class="stkrow" id="stkChoices"></div>
 </div>
+<div class="overlay hide" id="bookOv" style="z-index:12">
+  <div class="booktitle" id="bookTitle"></div>
+  <div class="btabs" id="bookTabs"></div>
+  <div class="bookwrap"><div class="bpages" id="bookPages"></div></div>
+  <div class="bnav"><button class="chip" id="bPrev">‹ 上一頁</button><span id="bookPageNo"></span><button class="chip" id="bNext">下一頁 ›</button></div>
+  <div><button class="btn sec" id="bookSongs">我的曲子</button><button class="btn" id="bookClose">回去玩</button></div>
+</div>
 <div class="overlay hide" id="songs">
   <div class="big">選一首曲子</div>
   <div class="note" style="margin:-4px 0 4px">在「跟著拍子演奏」拿到 1 顆星，就會打開下一首。</div>
@@ -257,7 +287,7 @@ body{background:radial-gradient(circle at 15% 10%,#fff3dc 0,transparent 40%),rad
   <svg viewBox="0 0 120 120" width="110" height="110" id="endBird"></svg>
   <div class="big">今天的遊戲時間到囉！</div>
   <div style="font-size:19px;line-height:1.7" id="endSub"></div>
-  <div><button class="btn" id="endAlbum">看我的曲子</button><button class="btn sec" id="endNext">換下一位</button></div>
+  <div><button class="btn" id="endAlbum">看我的貼紙簿</button><button class="btn sec" id="endNext">換下一位</button></div>
   <button class="chip" id="endMore" style="margin-top:8px">老師：再玩 2 分鐘</button>
 </div>
 <div class="overlay hide" id="pin" style="z-index:25">
@@ -431,7 +461,7 @@ function win(stars,title,sub,opts={}){
   setTimeout(()=>{fanfare();confetti();},100);
   $('winStars').innerHTML=[0,1,2].map(i=>starSvg(i<stars?'':'dim')).join('');
   $('winTitle').textContent=title;$('winSub').textContent=sub;
-  $('replay').style.display=opts.replay?'':'none';$('toMenu').style.display=opts.menu?'':'none';$('winLegend').innerHTML=opts.legend?legendHtml(opts.legend):'';$('again').textContent=opts.againText||'再玩一次';$('nextBtn').style.display=opts.next?'':'none';
+  $('replay').style.display=opts.replay?'':'none';$('toMenu').style.display=opts.menu?'':'none';$('winLegend').innerHTML=opts.legend?legendHtml(opts.legend):opts.rank?rankHtml():'';$('again').textContent=opts.againText||'再玩一次';$('nextBtn').style.display=opts.next?'':'none';
   $('win').classList.remove('hide');
 }
 function legendHtml(got){const rows=[[1,'正確率 60% 以上'],[2,'正確率 90% 以上'],[3,'100% 全部彈對（慢、中、快都可以）']];
@@ -458,18 +488,26 @@ function readSetup(){
   $('sub').innerHTML=levels().map((l,i)=>`<button class="chip ${i===S.lv&&!S.timed?'on':''}" data-lv="${i}">${l.name}</button>`).join('')+`<button class="chip ${S.timed?'on':''}" id="timedBtn">限時 30 秒</button>`+clefChips();
   bindClef();
   $('timedBtn').onclick=()=>{S.timed=true;save();enterMode('read');};
+  if(S.timed){const mb=myBest();say(mb?`你的紀錄是 ${mb} 個，挑戰看看！`:'30 秒能答對幾個？');}
   $('sub').querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{S.lv=+b.dataset.lv;S.timed=false;save();enterMode('read');});
   $('beats').style.visibility='hidden';$('listenTxt').textContent='聽聽看';
   G.score=0;G.last=null;clearInterval(G.timer);
-  if(S.timed){G.left=30;G.timer=setInterval(()=>{G.left--;drawReadStars();if(G.left<=0){clearInterval(G.timer);G.target=null;markProg('timed_'+clefKey(),G.score);let best=0;const bk='ng_best30_'+clefKey();try{best=+localStorage.getItem(bk)||0;if(G.score>best)localStorage.setItem(bk,G.score);}catch(e){}
-    win(G.score>=12?3:G.score>=7?2:1,`30 秒答對 ${G.score} 個！`,G.score>best?'新紀錄！':`最高紀錄：${best} 個`,{});}},1000);}
+  if(S.timed){G.left=30;G.myBest=myBest();G.broke=false;G.timer=setInterval(()=>{G.left--;drawReadStars();if(G.left<=0){clearInterval(G.timer);G.target=null;
+    const prev=G.myBest;const cb=classBest();markProg('timed30_'+clefKey(),G.score);const nb=classBest();
+    const sub=(G.score>prev&&prev>0?`打破自己的紀錄（原本 ${prev} 個）！`:G.score>prev?'第一次的紀錄！':`我的最高紀錄：${prev} 個`)+(nb.name&&CUR&&nb.name===CUR.name&&G.score>cb.v&&cb.v>0?'　也是全班第一名！':'');
+    win(G.score>=12?3:G.score>=7?2:1,`30 秒答對 ${G.score} 個！`,sub,{rank:true});}},1000);}
   drawReadStars();readNext();
 }
-function drawReadStars(){if(S.timed){info(`剩下 <b style="color:#f4845f;font-size:18px;margin:0 3px">${G.left}</b> 秒　答對 ${G.score} 個`);return;}info(Array.from({length:10},(_,i)=>`<span style="opacity:${i<G.score?1:.18};display:flex">${starSvg()}</span>`).join(''));}
+function myBest(){const P=(CUR&&CUR.prog)||{};return P['timed30_'+clefKey()]||0;}
+function classBest(){let v=0,name='';(DB.studs||[]).forEach(st=>{const b=(st.prog||{})['timed30_'+clefKey()]||0;if(b>v){v=b;name=st.name;}});return {v,name};}
+function rankHtml(){const k='timed30_'+clefKey();const L=(DB.studs||[]).map(st=>({n:st.name,c:st.color,v:(st.prog||{})[k]||0})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v).slice(0,5);
+  if(!L.length)return '';return '<div class="rank"><div class="tier" style="margin:0 0 4px">30 秒排行榜（'+CLEFNAMES[clefKey()]+'）</div>'+L.map((x,i)=>`<div class="rrow ${CUR&&x.n===CUR.name?'me':''}"><b>${i+1}</b><span class="av" style="background:${x.c}">${x.n.slice(0,1)}</span><span>${x.n}</span><em>${x.v} 個</em></div>`).join('')+'</div>';}
+function drawReadStars(){if(S.timed){const mb=G.myBest||0,cb=classBest();if(G.score>mb&&mb>0&&!G.broke){G.broke=true;say('破紀錄了！');popStar();}
+  info(`剩下 <b style="color:#f4845f;font-size:20px;margin:0 3px">${G.left}</b> 秒　答對 <b style="font-size:20px;margin:0 3px">${G.score}</b> 個　<span class="recp ${G.score>mb&&mb>0?'hot':''}">我的紀錄 ${Math.max(mb,G.score>mb&&mb>0?G.score:mb)}</span>`+(cb.v?`<span class="recp">全班第一 ${cb.name} ${cb.v}</span>`:''));return;}info(Array.from({length:10},(_,i)=>`<span style="opacity:${i<G.score?1:.18};display:flex">${starSvg()}</span>`).join(''));}
 function readNext(){
   const L=levels();const pool=S.timed?L[L.length-1].idx:L[S.lv].idx;let d;do{d=pool[Math.floor(Math.random()*pool.length)];}while(pool.length>1&&d===G.last);
   const c=clefKey();const staff=c==='bass'?'b':c==='treble'?'t':(d>7?'t':d<7?'b':(Math.random()<.5?'t':'b'));
-  G.last=d;G.target={d,staff};G.wrong=0;G.busy=false;clearKeys();$('name').textContent='';say('這是哪一個音？');
+  G.last=d;G.target={d,staff};G.wrong=0;G.busy=false;clearKeys();$('name').textContent='';if(!S.timed||G.score>0)say('這是哪一個音？');
   drawRead('new');if(S.autoSnd&&sfxOn())setTimeout(()=>tone(midiOf(d),0,1.2,.3),300);
 }
 function fitView(svg,wrap,w0,y0,h0){const cw=Math.max(1,wrap.clientWidth),ch=Math.max(1,wrap.clientHeight),sc=Math.min(ch/h0,cw/w0),W=cw/sc,H=ch/sc;svg.setAttribute('viewBox',`${-(W-w0)/2} ${y0-(H-h0)/2} ${W} ${H}`);return{W,H};}
@@ -698,7 +736,7 @@ $('nextBtn').onclick=()=>{$('win').classList.add('hide');
   else if(S.mode==='practice'){enterMode('perform');}
   else if(S.mode==='rhythm'){G.rhy=null;enterMode('rhythm');}
   else{const L=songList();if(S.song+1<L.length&&unlocked(S.song+1))S.song++;G.rand=null;enterMode('perform');}};
-window.addEventListener('resize',()=>{if(S.mode==='read'){if(G.target)drawRead(G.busy?'ok':'');return;}if(G.ng){const keep=G.idx;renderSong();if(S.mode==='practice'){G.idx=keep;highlightPractice();}else if(!G.running)setOffset(G.fixX-14-X0);}});
+window.addEventListener('resize',()=>{if(!$('bookOv').classList.contains('hide'))drawBook();if(S.mode==='read'){if(G.target)drawRead(G.busy?'ok':'');return;}if(G.ng){const keep=G.idx;renderSong();if(S.mode==='practice'){G.idx=keep;highlightPractice();}else if(!G.running)setOffset(G.fixX-14-X0);}});
 
 /* settings */
 function chipRow(id,get,set){const row=$(id);const sync=()=>row.querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c.dataset.v===String(get())));
@@ -803,7 +841,7 @@ function startSession(st){CUR=st;audio();G.sess={gains:[],left:DB.minutes*60};up
   say(`${st.name}，一起來玩吧！`);enterMode(S.mode);clearInterval(G.clockT);G.clockT=setInterval(tick,1000);tick();}
 function tick(){if(!G.sess)return;const c=$('clock');
   if(!DB.minutes){c.style.display='none';return;}c.style.display='';
-  const busy=['ended','settings','teacher','pin','songs','album','sticker'].some(id=>!$(id).classList.contains('hide'));
+  const busy=['ended','settings','teacher','pin','songs','album','sticker','bookOv'].some(id=>!$(id).classList.contains('hide'));
   if(!busy&&G.sess.left>0)G.sess.left--;
   const l=Math.max(0,G.sess.left);c.textContent=`${Math.floor(l/60)}:${String(l%60).padStart(2,'0')}`;c.classList.toggle('low',l<=30);
   if(l<=0&&!G.running&&$('win').classList.contains('hide')&&$('sticker').classList.contains('hide')&&$('ended').classList.contains('hide'))showEnded();}
@@ -813,9 +851,12 @@ function showEnded(){clearInterval(G.timer);stopPerform();if(mic.on)micStop();$(
   $('ended').classList.remove('hide');fanfare();}
 function endSession(){G.sess=null;clearInterval(G.clockT);}
 $('endNext').onclick=()=>showPicker();
-$('endAlbum').onclick=()=>{$('ended').classList.add('hide');showAlbum();};
+$('endAlbum').onclick=()=>{$('ended').classList.add('hide');openBook();};
 $('endMore').onclick=()=>askPin(()=>{G.sess.left=120;$('ended').classList.add('hide');tick();});
-$('studBtn').onclick=()=>{if(CUR)showAlbum();};
+$('studBtn').onclick=()=>{if(CUR)openBook();};
+$('bPrev').onclick=()=>{if(bookPage>0){bookPage--;drawBook(-1);}};$('bNext').onclick=()=>{bookPage++;drawBook(1);};
+$('bookClose').onclick=()=>{$('bookOv').classList.add('hide');if(G.sess&&DB.minutes&&G.sess.left<=0)$('ended').classList.remove('hide');};
+$('bookSongs').onclick=()=>{$('bookOv').classList.add('hide');showAlbum();};
 $('songsClose').onclick=()=>$('songs').classList.add('hide');
 function progHtml(st){const keep=CUR;CUR=st;const P=st.prog||{};let h='';const CN={treble:'高音譜',bass:'低音譜',grand:'雙手'};
   ['treble','bass','grand'].forEach(c=>{const L=c==='grand'?GSONGS:SONGS;h+=`<div class="tier">${CN[c]}</div>`;
@@ -823,7 +864,7 @@ function progHtml(st){const keep=CUR;CUR=st;const P=st.prog||{};let h='';const C
   const rd=[];Object.keys(LV).forEach(c=>LV[c].forEach((l,i)=>{if(P[`read_${c}_${i}`])rd.push(`${CN[c]}${l.name.split(' ')[0]}`);}));
   if(rd.length)h+=`<div class="tier">認音符過關</div><div style="font-size:14px">${rd.join('、')}</div>`;
   CUR=keep;return h;}
-function showAlbum(){$('albumTitle').textContent=`${CUR.name} 的貼紙和曲子`;$('albumProg').innerHTML=stickerBook(CUR)+progHtml(CUR);$('album').classList.remove('hide');}
+function showAlbum(){$('albumTitle').textContent=`${CUR.name} 的曲子`;$('albumProg').innerHTML=progHtml(CUR);$('album').classList.remove('hide');}
 $('albumClose').onclick=()=>{$('album').classList.add('hide');if(G.sess&&DB.minutes&&G.sess.left<=0)$('ended').classList.remove('hide');else if(!G.sess)showPicker();};
 
 const STK=[
@@ -878,8 +919,22 @@ function offerSticker(song){if(!CUR)return;CUR.stickers=CUR.stickers||[];const o
   $('stkSong').textContent=`〈${song}〉拿到三顆星！選一張你喜歡的貼紙`;
   $('stkChoices').innerHTML=pick3.map(i=>`<button class="stkc" data-i="${i}">${stickerSvg(i)}<b>${STK[i][0]}</b></button>`).join('');
   $('stkChoices').querySelectorAll('.stkc').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;CUR.stickers.push({i,song,d:new Date().toISOString().slice(0,10)});saveDB();if(G.sess)G.sess.gains.push(`貼紙「${STK[i][0]}」`);
-    $('stkChoices').innerHTML=`<div class="stkc big1">${stickerSvg(i)}<b>${STK[i][0]}</b></div>`;$('stkSong').textContent='貼進貼紙簿了！';setTimeout(()=>$('sticker').classList.add('hide'),1300);});
+    $('stkChoices').innerHTML=`<div class="stkc big1">${stickerSvg(i)}<b>${STK[i][0]}</b></div>`;$('stkSong').textContent='貼進貼紙簿了！';setTimeout(()=>$('sticker').classList.add('hide'),1600);});
   $('sticker').classList.remove('hide');setTimeout(()=>{fanfare();confetti();},150);}
+const CATS=[['恐龍','#2f8f5b',[30,31,32,33,34,35]],['車車','#d9483b',[23,36,37,38,39,40,41,43,42,22]],['動物','#c9603e',[1,18,19,20,21,24]],['音樂','#5b5bd6',[0,2,6,7]],['美食','#c24ccf',[14,15,16,25,26,27]],['大自然','#0f8fb3',[4,12,13,9,11,5,28,29]],['寶物','#d68c00',[3,8,10,17]]];
+let bookPage=0;
+function openBook(){if(!CUR)return;bookPage=0;drawBook();$('bookOv').classList.remove('hide');}
+function drawBook(anim){const own={};(CUR.stickers||[]).forEach(x=>own[x.i]=(own[x.i]||0)+1);const total=STK.length,got=Object.keys(own).length;
+  const narrow=window.innerWidth<640;const per=narrow?1:2;const pages=Math.ceil(CATS.length/per);if(bookPage>=pages)bookPage=pages-1;
+  $('bookTitle').innerHTML=`${CUR.name} 的貼紙簿　<span>${got} / ${total}</span>`;
+  $('bookTabs').innerHTML=CATS.map((c,i)=>`<button class="btab ${Math.floor(i/per)===bookPage?'on':''}" style="--tc:${c[1]}" data-p="${Math.floor(i/per)}">${c[0]}</button>`).join('');
+  $('bookTabs').querySelectorAll('.btab').forEach(b=>b.onclick=()=>{const np=+b.dataset.p;if(np!==bookPage){const d=np>bookPage?1:-1;bookPage=np;drawBook(d);}});
+  const pageHtml=ci=>{if(ci>=CATS.length)return '<div class="bpage"><div class="bend">繼續加油，<br>收集全部的貼紙！</div></div>';const [n,col,ids]=CATS[ci];const g=ids.filter(i=>own[i]).length;
+    return `<div class="bpage"><div class="bhead" style="color:${col}">${n}<span>${g} / ${ids.length}</span></div><div class="bgrid">`+ids.map(i=>own[i]?`<div class="bslot got">${stickerSvg(i)}<b>${STK[i][0]}</b>${own[i]>1?`<i>×${own[i]}</i>`:''}</div>`:`<div class="bslot">${stickerSvg(i)}<b>？</b></div>`).join('')+'</div></div>';};
+  const cs=[];for(let k=0;k<per;k++)cs.push(pageHtml(bookPage*per+k));
+  const bk=$('bookPages');bk.className='bpages'+(narrow?' one':'');bk.innerHTML=cs.join(narrow?'':'<div class="spine"></div>');
+  if(anim)bk.animate([{transform:`perspective(1400px) rotateY(${anim*-25}deg)`,opacity:.3},{transform:'none',opacity:1}],{duration:380,easing:'ease-out'});
+  $('bPrev').disabled=bookPage===0;$('bNext').disabled=bookPage>=pages-1;$('bookPageNo').textContent=`${bookPage+1} / ${pages}`;}
 function stickerBook(st){const L=st.stickers||[];return `<div class="tier">我的貼紙（${L.length} 張）</div>`+(L.length?`<div class="book">`+L.map(x=>`<div class="bk" title="${x.song}">${stickerSvg(x.i)}<span>${x.song}</span></div>`).join('')+'</div>':'<div class="note" style="margin:0">曲子拿到三顆星，就能選一張貼紙！</div>');}
 /* PIN */
 let pinCb=null,pinBuf='';
