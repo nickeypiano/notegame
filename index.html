@@ -1082,7 +1082,6 @@ function showRhySet(){const set=rhySet();$('rsList').innerHTML=RUNITS.map(u=>`<b
 $('rsOk')&&0;
 document.addEventListener('touchmove',e=>{const ov=e.target.closest('.overlay');if(!ov||ov.scrollHeight<=ov.clientHeight)e.preventDefault();},{passive:false});
 document.addEventListener('gesturestart',e=>e.preventDefault());
-let lastTouchEnd=0;document.addEventListener('touchend',e=>{const now=Date.now();if(now-lastTouchEnd<350&&!e.target.closest('input,textarea'))e.preventDefault();lastTouchEnd=now;},{passive:false});
 /* PIN */
 let pinCb=null,pinBuf='';
 function askPin(cb){pinCb=cb;pinBuf='';drawPin();$('pin').classList.remove('hide');}
