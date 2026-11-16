@@ -620,7 +620,7 @@ function startPerform(demo=true){
   G.res=so.notes.map(nt=>nt.rest?'rest':null);renderSong();
   const spb=60/bpm();const b=newBus();const MT=so.meter||4;
   let t0=a.currentTime+.35;G.demoT=null;
-  if(demo){const d0=t0;so.notes.forEach(nt=>{if(nt.rest)return;if(so.rhythm)click(d0+nt.beat*spb,false,b);else tone(midiOf(nt.d),0,Math.max(.4,nt.dur*spb*.95),.28,b,d0+nt.beat*spb);});G.demoT=d0;t0=d0+so.total*spb+1;}
+  if(demo){const d0=t0;so.notes.forEach(nt=>{if(nt.rest)return;if(so.rhythm)click(d0+nt.beat*spb,false,b);else tone(midiOf(nt.d),0,Math.max(.4,nt.dur*spb*.95),.28,b,d0+nt.beat*spb);});G.demoT=d0;scheduleCount(so,d0,spb);t0=d0+so.total*spb+1;}
   const st=t0+MT*spb;G.mt=MT;
   if(S.met&&!(mic.on&&!demo&&false)&&!mic.on)for(let k=0;k<MT+so.total;k++)click(t0+k*spb,k%MT===0,b);
   else for(let k=0;k<MT;k++)click(t0+k*spb,k===0,b);
@@ -639,7 +639,7 @@ function startPerform(demo=true){
     G.raf=requestAnimationFrame(loop);};
   G.raf=requestAnimationFrame(loop);
 }
-function stopPerform(manual){G.demoRun=false;G.running=false;G.inDemo=false;cancelAnimationFrame(G.raf);stopBus();beats(-1);if($('playBtn'))$('playBtn').querySelector('span').textContent='開始';if(manual){say('按「開始」再來一次！');}}
+function stopPerform(manual){stopCount();G.demoRun=false;G.running=false;G.inDemo=false;cancelAnimationFrame(G.raf);stopBus();beats(-1);if($('playBtn'))$('playBtn').querySelector('span').textContent='開始';if(manual){say('按「開始」再來一次！');}}
 function performInput(m,src,t){
   if(!G.running||G.inDemo)return;const so=curSong();const bt=(t-G.st)/G.spb;
   let best=-1,bd=9,near=false;so.notes.forEach((nt,i)=>{if(G.res[i])return;const d=Math.abs(bt-nt.beat);if(d>=.5)return;near=true;if((so.rhythm||same(m,midiOf(nt.d),src))&&d<bd){bd=d;best=i;}});
@@ -664,7 +664,13 @@ function enterMode(m){
   if(m==='read')readSetup();else songSetup();
 }
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{audio();enterMode(t.dataset.m);});
-function demoScroll(){const so=curSong();stopPerform();const tempo=S.mode==='practice'?so.tempo*.8:bpm();const {t0,spb}=playSong(so,tempo);G.demoRun=true;
+const CNUM=['','一','二','三','四'];let countT=[];
+function speakNum(n){try{const u=new SpeechSynthesisUtterance(CNUM[n]);u.lang='zh-TW';u.rate=1.4;u.volume=1;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}}
+function stopCount(){countT.forEach(clearTimeout);countT=[];try{speechSynthesis.cancel();}catch(e){}}
+function scheduleCount(so,t0,spb){stopCount();if(so.rhythm&&false)return;const seen=new Set();
+  so.notes.forEach(nt=>{if(nt.rest||nt.dur<2)return;for(let k=1;k<Math.floor(nt.dur);k++){const b=nt.beat+k;if(seen.has(b))continue;seen.add(b);const n=k+1;
+    const ms=(t0+b*spb-ac.currentTime)*1000-60;countT.push(setTimeout(()=>{speakNum(n);if(G.marks){const t=el('text',{x:X0+b*BEAT,y:G.markY-6,'text-anchor':'middle','font-size':30,'font-weight':900,fill:'#f4845f'},G.marks);t.textContent=n;t.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none',offset:.2},{opacity:1,offset:.7},{opacity:0}],{duration:900,fill:'forwards'});setTimeout(()=>t.remove(),950);}},Math.max(0,ms)));}});}
+function demoScroll(){const so=curSong();stopPerform();const tempo=S.mode==='practice'?so.tempo*.8:bpm();const {t0,spb}=playSong(so,tempo);G.demoRun=true;scheduleCount(so,t0,spb);
   if(G.hl)G.hl.setAttribute('opacity',S.mode==='practice'?1:0);say('仔細聽，看譜跟著走');
   const loop=()=>{if(!G.demoRun)return;const db=(ac.currentTime-t0)/spb;
     if(S.mode==='practice'){let e=0;for(let k=0;k<G.ev.length;k++)if(G.ev[k].beat<=db+.01)e=k;const x=X0+G.ev[e].beat*BEAT;G.hl.setAttribute('x',x-28);}
