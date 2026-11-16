@@ -175,6 +175,37 @@ body{background:radial-gradient(circle at 15% 10%,#fff3dc 0,transparent 40%),rad
 .rrow{display:flex;align-items:center;gap:8px;padding:3px 0;font-size:16px}.rrow b{width:18px;color:#c9a97a}.rrow em{margin-left:auto;font-style:normal;font-weight:800}
 .rrow .av{width:24px;height:24px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:900}.rrow.me{color:#f4845f;font-weight:800}
 @media (max-height:540px){.bpages{min-height:0}.bslot svg{width:60px;height:60px}.bgrid{grid-template-columns:repeat(auto-fill,minmax(70px,1fr));gap:4px}.booktitle{font-size:20px}.bhead{font-size:17px}}
+.bgrid{grid-template-columns:repeat(auto-fill,minmax(118px,1fr))!important;gap:10px!important}
+.bslot{border:none;background:none;font-family:inherit;padding:0;cursor:default}
+.bslot.got{cursor:pointer}.bslot svg{width:112px!important;height:112px!important;filter:none!important;opacity:1!important}
+.bslot.got svg{animation:idle 3s ease-in-out infinite}.bslot.got:nth-child(3n) svg{animation-delay:-1s}.bslot.got:nth-child(3n+1) svg{animation-delay:-2s}
+.bslot.got:active svg{transform:scale(.92)}
+.bslot b{font-size:14px}
+.qslot{width:100px;height:100px;margin:6px;border-radius:50%;border:3px dashed #e6d3b3;display:flex;align-items:center;justify-content:center;font-size:40px;font-weight:900;color:#e6d3b3;background:#fffdf7}
+@keyframes idle{0%,100%{transform:rotate(-4deg)}50%{transform:rotate(4deg) translateY(-3px)}}
+.svbox{width:min(320px,60vw,55vh);height:min(320px,60vw,55vh);cursor:pointer}.svbox svg{width:100%;height:100%;overflow:visible}
+.svbox .sart{transform-box:fill-box;transform-origin:center}
+.a-stomp .sart{animation:stomp .9s ease-in-out infinite}
+.a-drive .sart{animation:drive 1.6s ease-in-out infinite}
+.a-hop .sart{animation:hop .8s ease-in-out infinite}
+.a-dance .sart{animation:dance .7s ease-in-out infinite}
+.a-jelly .sart{animation:jelly 1s ease-in-out infinite}
+.a-float .sart{animation:float 2s ease-in-out infinite}
+.a-shine .sart{animation:shine 1.4s ease-in-out infinite}
+.svbox.boost svg{animation:pop .5s ease-out}
+.svbox .keyes{animation:blink 3.2s infinite;transform-box:fill-box;transform-origin:center}
+@keyframes stomp{0%,100%{transform:translateY(0) rotate(0)}25%{transform:translateY(-6px) rotate(-6deg)}50%{transform:translateY(1px) rotate(0)}75%{transform:translateY(-6px) rotate(6deg)}}
+@keyframes drive{0%,100%{transform:translateX(-7px)}50%{transform:translateX(7px)}25%,75%{transform:translateY(-1.5px)}}
+@keyframes hop{0%,100%{transform:translateY(0) scale(1.05,.95)}40%{transform:translateY(-9px) scale(.95,1.05)}}
+@keyframes dance{0%,100%{transform:rotate(-10deg)}50%{transform:rotate(10deg) translateY(-3px)}}
+@keyframes jelly{0%,100%{transform:scale(1,1)}25%{transform:scale(1.12,.88)}50%{transform:scale(.9,1.1)}75%{transform:scale(1.05,.95)}}
+@keyframes float{0%,100%{transform:translateY(0) rotate(-3deg)}50%{transform:translateY(-6px) rotate(3deg)}}
+@keyframes shine{0%,100%{transform:scale(1) rotate(0)}50%{transform:scale(1.1) rotate(8deg)}}
+@keyframes pop{0%{transform:scale(.7)}60%{transform:scale(1.12)}100%{transform:scale(1)}}
+@keyframes blink{0%,92%,100%{transform:scaleY(1)}95%{transform:scaleY(.1)}}
+.stkc svg{width:140px!important;height:140px!important}.stkc{width:170px!important}
+.stkc .sart{animation:float 2s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
+@media (max-height:540px){.bslot svg{width:76px!important;height:76px!important}.qslot{width:66px;height:66px;font-size:28px}.bgrid{grid-template-columns:repeat(auto-fill,minmax(84px,1fr))!important}.stkc svg{width:96px!important;height:96px!important}.stkc{width:120px!important}}
 </style>
 </head>
 <body>
@@ -275,6 +306,13 @@ body{background:radial-gradient(circle at 15% 10%,#fff3dc 0,transparent 40%),rad
   <div class="bookwrap"><div class="bpages" id="bookPages"></div></div>
   <div class="bnav"><button class="chip" id="bPrev">‹ 上一頁</button><span id="bookPageNo"></span><button class="chip" id="bNext">下一頁 ›</button></div>
   <div><button class="btn sec" id="bookSongs">我的曲子</button><button class="btn" id="bookClose">回去玩</button></div>
+</div>
+<div class="overlay hide" id="stkView" style="z-index:14">
+  <div class="svbox" id="svBox"></div>
+  <div class="big" id="svName" style="margin-top:14px"></div>
+  <div style="font-size:16px;color:#a07f56" id="svSub"></div>
+  <div class="note">點貼紙可以再動一次！</div>
+  <button class="btn" id="svClose">放回貼紙簿</button>
 </div>
 <div class="overlay hide" id="songs">
   <div class="big">選一首曲子</div>
@@ -841,7 +879,7 @@ function startSession(st){CUR=st;audio();G.sess={gains:[],left:DB.minutes*60};up
   say(`${st.name}，一起來玩吧！`);enterMode(S.mode);clearInterval(G.clockT);G.clockT=setInterval(tick,1000);tick();}
 function tick(){if(!G.sess)return;const c=$('clock');
   if(!DB.minutes){c.style.display='none';return;}c.style.display='';
-  const busy=['ended','settings','teacher','pin','songs','album','sticker','bookOv'].some(id=>!$(id).classList.contains('hide'));
+  const busy=['ended','settings','teacher','pin','songs','album','sticker','bookOv','stkView'].some(id=>!$(id).classList.contains('hide'));
   if(!busy&&G.sess.left>0)G.sess.left--;
   const l=Math.max(0,G.sess.left);c.textContent=`${Math.floor(l/60)}:${String(l%60).padStart(2,'0')}`;c.classList.toggle('low',l<=30);
   if(l<=0&&!G.running&&$('win').classList.contains('hide')&&$('sticker').classList.contains('hide')&&$('ended').classList.contains('hide'))showEnded();}
@@ -854,6 +892,8 @@ $('endNext').onclick=()=>showPicker();
 $('endAlbum').onclick=()=>{$('ended').classList.add('hide');openBook();};
 $('endMore').onclick=()=>askPin(()=>{G.sess.left=120;$('ended').classList.add('hide');tick();});
 $('studBtn').onclick=()=>{if(CUR)openBook();};
+$('svBox').onclick=()=>{const b=$('svBox');const cl=b.className;b.className='svbox';void b.offsetWidth;b.className=cl+' boost';playStk(catOf(STK.findIndex(x=>x[0]===$('svName').textContent)));};
+$('svClose').onclick=()=>$('stkView').classList.add('hide');
 $('bPrev').onclick=()=>{if(bookPage>0){bookPage--;drawBook(-1);}};$('bNext').onclick=()=>{bookPage++;drawBook(1);};
 $('bookClose').onclick=()=>{$('bookOv').classList.add('hide');if(G.sess&&DB.minutes&&G.sess.left<=0)$('ended').classList.remove('hide');};
 $('bookSongs').onclick=()=>{$('bookOv').classList.add('hide');showAlbum();};
@@ -912,7 +952,15 @@ const STK=[
  ['小火車','#ffe7cc','<rect x="12" y="20" width="14" height="16" rx="2" fill="#e5484d"/><rect x="15" y="23" width="8" height="6" fill="#dff3ff"/><rect x="26" y="26" width="22" height="10" rx="2" fill="#5b5bd6"/><rect x="38" y="18" width="5" height="8" fill="#4a3b2a"/><circle cx="41" cy="13" r="3" fill="#ddd"/><circle cx="18" cy="39" r="4" fill="#3b2f22"/><circle cx="32" cy="39" r="4" fill="#3b2f22"/><circle cx="43" cy="39" r="4" fill="#3b2f22"/>'],
  ['飛機','#dff3ff','<path d="M10 32l34-6q6 0 6 3t-6 3z" fill="#fff" stroke="#0fa3c7" stroke-width="2"/><path d="M28 29l-6-12h5l10 11zM28 32l-4 9h5l7-9z" fill="#0fa3c7"/><path d="M12 31l-2-7h4l4 6z" fill="#e5484d"/><circle cx="40" cy="29" r="1.5" fill="#0fa3c7"/><circle cx="35" cy="30" r="1.5" fill="#0fa3c7"/>'],
  ['垃圾車','#e2f6e8','<rect x="8" y="18" width="28" height="20" rx="3" fill="#30a46c"/><path d="M36 38V24h8l6 7v7z" fill="#30a46c"/><path d="M38 26h5l4 5h-9z" fill="#dff3ff"/><path d="M14 23v10M20 23v10M26 23v10" stroke="#1f7a4a" stroke-width="2"/><circle cx="16" cy="40" r="4.5" fill="#3b2f22"/><circle cx="42" cy="40" r="4.5" fill="#3b2f22"/>']];
-function stickerSvg(i){const[n,bg,ic]=STK[i];return `<svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="27" fill="${bg}" stroke="#fff" stroke-width="3"/><circle cx="30" cy="30" r="27" fill="none" stroke="#ecd8b6" stroke-width="1.5" stroke-dasharray="3 3"/>${ic}</svg>`;}
+const FACE={0:[25,41,.45],2:[30,39,.6],3:[30,32,.9],5:[30,30,.42],6:[30,34,.65],7:[30,31,.8],8:[30,29,.6],10:[30,22,.6],11:[30,31,.75],12:[23,30,.6],14:[30,34,.8],15:[30,35,.65],16:[30,24,.55],17:[30,25,.7],22:[30,32,.45],23:[29,34,.45],26:[30,32,.6],27:[30,38,.6],28:[30,24,.7],29:[30,21,.55],35:[30,36,.7],36:[24,35,.45],37:[20,32,.45],38:[17,36,.38],39:[42,34,.4],40:[23,31,.42],41:[19,33,.4],43:[22,30,.5]};
+function face(x,y,k){return `<g class="kface"><ellipse cx="${x-10*k}" cy="${y+3.5*k}" rx="${3.4*k}" ry="${2.2*k}" fill="#ff8fa3" opacity=".65"/><ellipse cx="${x+10*k}" cy="${y+3.5*k}" rx="${3.4*k}" ry="${2.2*k}" fill="#ff8fa3" opacity=".65"/><g class="keyes"><ellipse cx="${x-6*k}" cy="${y-1*k}" rx="${2.3*k}" ry="${2.8*k}" fill="#3b2f22"/><ellipse cx="${x+6*k}" cy="${y-1*k}" rx="${2.3*k}" ry="${2.8*k}" fill="#3b2f22"/><circle cx="${x-5.2*k}" cy="${y-2*k}" r="${.9*k}" fill="#fff"/><circle cx="${x+6.8*k}" cy="${y-2*k}" r="${.9*k}" fill="#fff"/></g><path d="M${x-2.6*k} ${y+2.6*k}q${2.6*k} ${3*k} ${5.2*k} 0" stroke="#3b2f22" stroke-width="${1.3*k}" fill="none" stroke-linecap="round"/></g>`;}
+function stickerSvg(i){const[n,bg,ic]=STK[i];const f=FACE[i]?face(...FACE[i]):'';
+  return `<svg viewBox="-2 -2 64 64" class="stk"><circle cx="30" cy="31.5" r="28.5" fill="#000" opacity=".1"/><circle cx="30" cy="30" r="28.5" fill="#fff"/><circle cx="30" cy="30" r="25" fill="${bg}"/><g class="sart">${ic}${f}</g><path d="M14 16a20 20 0 0 1 12-8" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none" opacity=".7"/></svg>`;}
+function catOf(i){const c=CATS.find(c=>c[2].includes(i));return c?c[0]:'寶物';}
+const ANIM={'恐龍':'a-stomp','車車':'a-drive','動物':'a-hop','音樂':'a-dance','美食':'a-jelly','大自然':'a-float','寶物':'a-shine'};
+const SND={'恐龍':[[48,0],[48,.25],[43,.5]],'車車':[[67,0],[64,.12],[67,.24],[64,.36]],'動物':[[72,0],[76,.1],[79,.2]],'音樂':[[60,0],[64,.12],[67,.24],[72,.36]],'美食':[[76,0],[74,.1],[72,.2],[79,.32]],'大自然':[[72,0],[79,.2],[84,.4]],'寶物':[[79,0],[84,.1],[88,.2],[91,.3]]};
+function showSticker(i,song){const c=catOf(i);$('svBox').innerHTML=stickerSvg(i);$('svBox').className='svbox '+ANIM[c];$('svName').textContent=STK[i][0];$('svSub').textContent=song?`${c}・〈${song}〉拿到的`:c;$('stkView').classList.remove('hide');playStk(c);}
+function playStk(c){if(!sfxOn())return;(SND[c]||SND['寶物']).forEach(([m,t])=>tone(m,t,.4,.22));}
 function offerSticker(song){if(!CUR)return;CUR.stickers=CUR.stickers||[];const own=new Set(CUR.stickers.map(x=>x.i));
   let pool=STK.map((_,i)=>i).filter(i=>!own.has(i));if(pool.length<3)pool=STK.map((_,i)=>i);
   const pick3=[];while(pick3.length<3){const i=pool[Math.floor(Math.random()*pool.length)];if(!pick3.includes(i))pick3.push(i);}
@@ -930,10 +978,11 @@ function drawBook(anim){const own={};(CUR.stickers||[]).forEach(x=>own[x.i]=(own
   $('bookTabs').innerHTML=CATS.map((c,i)=>`<button class="btab ${Math.floor(i/per)===bookPage?'on':''}" style="--tc:${c[1]}" data-p="${Math.floor(i/per)}">${c[0]}</button>`).join('');
   $('bookTabs').querySelectorAll('.btab').forEach(b=>b.onclick=()=>{const np=+b.dataset.p;if(np!==bookPage){const d=np>bookPage?1:-1;bookPage=np;drawBook(d);}});
   const pageHtml=ci=>{if(ci>=CATS.length)return '<div class="bpage"><div class="bend">繼續加油，<br>收集全部的貼紙！</div></div>';const [n,col,ids]=CATS[ci];const g=ids.filter(i=>own[i]).length;
-    return `<div class="bpage"><div class="bhead" style="color:${col}">${n}<span>${g} / ${ids.length}</span></div><div class="bgrid">`+ids.map(i=>own[i]?`<div class="bslot got">${stickerSvg(i)}<b>${STK[i][0]}</b>${own[i]>1?`<i>×${own[i]}</i>`:''}</div>`:`<div class="bslot">${stickerSvg(i)}<b>？</b></div>`).join('')+'</div></div>';};
+    return `<div class="bpage"><div class="bhead" style="color:${col}">${n}<span>${g} / ${ids.length}</span></div><div class="bgrid">`+ids.map(i=>own[i]?`<button class="bslot got" data-i="${i}">${stickerSvg(i)}<b>${STK[i][0]}</b>${own[i]>1?`<i>×${own[i]}</i>`:''}</button>`:`<div class="bslot"><div class="qslot">?</div><b>還沒拿到</b></div>`).join('')+'</div></div>';};
   const cs=[];for(let k=0;k<per;k++)cs.push(pageHtml(bookPage*per+k));
   const bk=$('bookPages');bk.className='bpages'+(narrow?' one':'');bk.innerHTML=cs.join(narrow?'':'<div class="spine"></div>');
   if(anim)bk.animate([{transform:`perspective(1400px) rotateY(${anim*-25}deg)`,opacity:.3},{transform:'none',opacity:1}],{duration:380,easing:'ease-out'});
+  bk.querySelectorAll('.bslot.got').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;const x=(CUR.stickers||[]).find(z=>z.i===i);showSticker(i,x&&x.song);});
   $('bPrev').disabled=bookPage===0;$('bNext').disabled=bookPage>=pages-1;$('bookPageNo').textContent=`${bookPage+1} / ${pages}`;}
 function stickerBook(st){const L=st.stickers||[];return `<div class="tier">我的貼紙（${L.length} 張）</div>`+(L.length?`<div class="book">`+L.map(x=>`<div class="bk" title="${x.song}">${stickerSvg(x.i)}<span>${x.song}</span></div>`).join('')+'</div>':'<div class="note" style="margin:0">曲子拿到三顆星，就能選一張貼紙！</div>');}
 /* PIN */
