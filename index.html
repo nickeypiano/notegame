@@ -283,6 +283,7 @@ html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscro
     <div class="t">顏色提示（音符和琴鍵同色）</div><div class="row" id="colRow"><button class="chip" data-v="1">開</button><button class="chip" data-v="0">關</button></div>
     <div class="t">認音符時先播放聲音</div><div class="row" id="sndRow"><button class="chip" data-v="1">開</button><button class="chip" data-v="0">關</button></div>
     <div class="t">演奏時一起播旋律（用麥克風時會自動關閉）</div><div class="row" id="melRow"><button class="chip" data-v="1">開</button><button class="chip" data-v="0">關</button></div>
+    <div class="t">演奏和示範時加上伴奏（用麥克風時自動關閉）</div><div class="row" id="accRow"><button class="chip" data-v="1">開</button><button class="chip" data-v="0">關</button></div>
     <div class="t">節拍器</div><div class="row" id="metRow"><button class="chip" data-v="1">開</button><button class="chip" data-v="0">關</button></div>
   </div>
   <button class="btn" id="closeSet">好了</button>
@@ -773,10 +774,25 @@ function practiceInput(m,src){
   else{G.wrong++;flashKey(m,'bad',400);mood('oops');say(TRY[Math.min(G.wrong-1,2)]);if(G.wrong>=2)ev.idx.filter(i=>!G.got.has(i)).forEach(i=>hintKey(so.notes[i].d));}
 }
 function playSong(so,tempoBpm){
-  const a=audio();const b=newBus();const spb=60/tempoBpm;const t0=a.currentTime+.2;
+  const a=audio();const b=newBus();const spb=60/tempoBpm;const t0=a.currentTime+.2;accomp(so,t0,spb,b);
   so.notes.forEach(nt=>{if(nt.rest)return;if(so.rhythm)click(t0+nt.beat*spb,false,b);else tone(midiOf(nt.d),0,Math.max(.5,nt.dur*spb*1.1),.3,b,t0+nt.beat*spb);});
   return {t0,spb};
 }
+
+/* ---------- accompaniment ---------- */
+const CHORDS=[[0,[0,4,7],.25],[5,[5,9,0],.15],[7,[7,11,2,5],.1],[9,[9,0,4],-.3],[2,[2,5,9],-1],[4,[4,7,11],-1]];
+function harmony(so){const m=so.meter||4;const bars=Math.ceil(so.total/m);const out=[];
+  for(let b=0;b<bars;b++){const w=new Array(12).fill(0);so.notes.forEach(n=>{if(n.rest||n.d==null)return;const s0=Math.max(n.beat,b*m),e0=Math.min(n.beat+n.dur,(b+1)*m);if(e0>s0)w[midiOf(n.d)%12]+=(e0-s0)*(n.beat>=b*m&&n.beat<b*m+.01?1.5:1);});
+    let best=CHORDS[0],bs=-1;CHORDS.forEach(c=>{let sc=c[1].reduce((a,pc,ix)=>a+w[pc]*(ix===3?.4:1),0)+c[2];if(b===bars-1&&c[0]===0)sc+=5;if(b===0&&c[0]===0)sc+=1;if(sc>bs){bs=sc;best=c;}});out.push(best);}
+  return out;}
+function accTone(m,t,dur,vol,dest){const a=audio();const o=a.createOscillator(),o2=a.createOscillator(),g=a.createGain();o.type='sine';o2.type='triangle';o.frequency.value=freq(m);o2.frequency.value=freq(m)*2;
+  const g2=a.createGain();g2.gain.value=.15;o2.connect(g2);g2.connect(g);o.connect(g);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+dur);g.connect(dest);o.start(t);o2.start(t);o.stop(t+dur+.05);o2.stop(t+dur+.05);}
+function accOn(so){return S.acc!==false&&!mic.on&&!so.rhythm&&!so.grand;}
+function accomp(so,t0,spb,dest){if(!accOn(so))return;const m=so.meter||4;const H=harmony(so);const low=clefKey()==='bass';
+  H.forEach((c,b)=>{const root=c[0],tri=c[1];const bt=t0+b*m*spb;const bassM=(low?24:36)+root;const ch=tri.slice(0,3).map(pc=>{let x=(low?60:48)+pc;if(x<(low?60:52))x+=12;return x;});
+    accTone(bassM,bt,m*spb*.95,.16,dest);
+    if(m===3){[1,2].forEach(k=>ch.forEach(x=>accTone(x,bt+k*spb,spb*.8,.045,dest)));}
+    else{const pat=[ch[0],ch[2],ch[1],ch[2]];for(let k=0;k<4;k++)accTone(pat[k],bt+k*spb,spb*.9,.06,dest);}});}
 
 /* ---------- PERFORM ---------- */
 function startPerform(demo=true){
@@ -784,11 +800,12 @@ function startPerform(demo=true){
   G.res=so.notes.map(nt=>nt.rest?'rest':null);renderSong();
   const spb=60/bpm();const b=newBus();const MT=so.meter||4;
   let t0=a.currentTime+.35;G.demoT=null;
-  if(demo){const d0=t0;so.notes.forEach(nt=>{if(nt.rest)return;if(so.rhythm)click(d0+nt.beat*spb,false,b);else tone(midiOf(nt.d),0,Math.max(.4,nt.dur*spb*.95),.28,b,d0+nt.beat*spb);});G.demoT=d0;scheduleCount(so,d0,spb);t0=d0+so.total*spb+1;}
+  if(demo){const d0=t0;so.notes.forEach(nt=>{if(nt.rest)return;if(so.rhythm)click(d0+nt.beat*spb,false,b);else tone(midiOf(nt.d),0,Math.max(.4,nt.dur*spb*.95),.28,b,d0+nt.beat*spb);});accomp(so,d0,spb,b);G.demoT=d0;scheduleCount(so,d0,spb);t0=d0+so.total*spb+1;}
   const st=t0+MT*spb;G.mt=MT;
   if(S.met&&!(mic.on&&!demo&&false)&&!mic.on)for(let k=0;k<MT+so.total;k++)click(t0+k*spb,k%MT===0,b);
   else for(let k=0;k<MT;k++)click(t0+k*spb,k===0,b);
   if(S.mel&&!mic.on&&!so.rhythm)so.notes.forEach(nt=>!nt.rest&&tone(midiOf(nt.d),0,Math.max(.4,nt.dur*spb*.95),.22,b,st+nt.beat*spb));
+  accomp(so,st,spb,b);
   G.spb=spb;G.st=st;G.running=true;G.lastBeat=-99;
   $('playBtn').querySelector('span').textContent=demo?'跳過示範':'停止';G.inDemo=demo;
   const loop=()=>{if(!G.running)return;
@@ -862,6 +879,7 @@ chipRow('labRow',()=>S.lab,v=>S.lab=v);
 chipRow('colRow',()=>S.color?'1':'0',v=>S.color=v==='1');
 chipRow('sndRow',()=>S.autoSnd?'1':'0',v=>S.autoSnd=v==='1');
 chipRow('melRow',()=>S.mel?'1':'0',v=>S.mel=v==='1');
+chipRow('accRow',()=>S.acc!==false?'1':'0',v=>S.acc=v==='1');
 chipRow('metRow',()=>S.met?'1':'0',v=>S.met=v==='1');
 $('gear').onclick=()=>askPin(()=>{stopPerform(true);$('kbdRow').sync();$('settings').classList.remove('hide');});
 $('closeSet').onclick=()=>{$('settings').classList.add('hide');if(G.dirty){G.dirty=false;refreshKeys();if(S.mode==='read')drawRead('');else enterMode(S.mode);}};
