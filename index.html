@@ -206,6 +206,11 @@ body{background:radial-gradient(circle at 15% 10%,#fff3dc 0,transparent 40%),rad
 .stkc svg{width:140px!important;height:140px!important}.stkc{width:170px!important}
 .stkc .sart{animation:float 2s ease-in-out infinite;transform-box:fill-box;transform-origin:center}
 @media (max-height:540px){.bslot svg{width:76px!important;height:76px!important}.qslot{width:66px;height:66px;font-size:28px}.bgrid{grid-template-columns:repeat(auto-fill,minmax(84px,1fr))!important}.stkc svg{width:96px!important;height:96px!important}.stkc{width:120px!important}}
+html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscroll-behavior:none}
+#app{height:100%;height:100dvh;overflow:hidden}
+.piano,.piano *{touch-action:none;-webkit-touch-callout:none;-webkit-user-select:none;user-select:none}
+#staffwrap,.card,.stage,.head{touch-action:none}
+.overlay{touch-action:pan-y;overscroll-behavior:contain;-webkit-overflow-scrolling:touch}
 </style>
 </head>
 <body>
@@ -1075,6 +1080,9 @@ function showRhySet(){const set=rhySet();$('rsList').innerHTML=RUNITS.map(u=>`<b
   const easy=!(CUR&&CUR.prog&&CUR.prog.rhyEasy===false);$('rsEasy').innerHTML=`<button class="chip ${easy?'on':''}" data-v="1">附點只放在第1～2拍或第3～4拍，而且不連續（建議）</button><button class="chip ${easy?'':'on'}" data-v="0">附點自由出現</button>`;
   $('rsEasy').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{$('rsEasy').querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c===b));});$('rsWho').textContent=CUR?`幫 ${CUR.name} 選要練習的拍子（會記住）`:'';$('rhySetOv').classList.remove('hide');}
 $('rsOk')&&0;
+document.addEventListener('touchmove',e=>{const ov=e.target.closest('.overlay');if(!ov||ov.scrollHeight<=ov.clientHeight)e.preventDefault();},{passive:false});
+document.addEventListener('gesturestart',e=>e.preventDefault());
+let lastTouchEnd=0;document.addEventListener('touchend',e=>{const now=Date.now();if(now-lastTouchEnd<350&&!e.target.closest('input,textarea'))e.preventDefault();lastTouchEnd=now;},{passive:false});
 /* PIN */
 let pinCb=null,pinBuf='';
 function askPin(cb){pinCb=cb;pinBuf='';drawPin();$('pin').classList.remove('hide');}
