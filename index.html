@@ -767,13 +767,13 @@ function markNote(i,r,silent){const ng=G.ng[i];if(!ng)return;const col=r==='bad'
   if(!silent&&S.mode!=='practice'){const t=el('text',{x:ng.x,y:G.markY,'text-anchor':'middle','font-size':17,'font-weight':900,fill:col},G.marks);t.textContent=r==='perfect'?'很準！':r==='good'?'不錯':'錯過';t.animate([{opacity:0,transform:'translateY(8px)'},{opacity:1,transform:'none'}],{duration:250});}}
 
 /* ---------- A4 sheet ---------- */
-function printSheet(){const so=curSong();const grand=!!so.grand;const m=so.meter||4;const barsPer=so.notes.some(n=>n.dur===.5)&&m===4?3:4;const W=1000,LM=grand?140:120,bw=(W-LM-20)/(barsPer*m);
+function printSheet(){const so=curSong();const grand=!!so.grand;const m=so.meter||4;const barsPer=so.notes.some(n=>n.dur===.5)&&m===4?3:4;const W=1000,LM=grand?140:120,PAD=28,bw=(W-LM-30-PAD*barsPer)/(barsPer*m);
   const sysH=grand?320:170;const nSys=Math.ceil(so.total/(barsPer*m));let out='';
   for(let k=0;k<nSys;k++){const b0=k*barsPer*m,b1=Math.min(so.total,b0+barsPer*m);const svg=document.createElementNS(NS,'svg');svg.setAttribute('viewBox',`0 20 ${W} ${sysH}`);svg.setAttribute('class','sys');
-    const right=LM+(b1-b0)*bw+10;const X=b=>LM+20+(b-b0)*bw;
+    const X=b=>LM+20+(b-b0)*bw+Math.floor((b-b0)/m+1e-9)*PAD;const right=X(b1)-14;
     allLines(svg,10,right);if(grand)el('line',{x1:10,x2:10,y1:60,y2:270,stroke:'#000','stroke-width':3},svg);drawClefs(svg,14);
     if(k===0){const ts=el('g',{'font-family':'Georgia,serif','font-weight':900,'font-size':44,fill:'#000','text-anchor':'middle'},svg);[0].concat(grand?[GOFF]:[]).forEach(o=>{el('text',{x:96,y:97+o},ts).textContent=String(m);el('text',{x:96,y:137+o},ts).textContent=String(m);});}
-    for(let b=b0+m;b<b1;b+=m){const x=X(b)-22;el('line',{x1:x,x2:x,y1:60,y2:grand?270:140,stroke:'#000','stroke-width':2},svg);}
+    for(let b=b0+m;b<b1;b+=m){const x=X(b)-24;el('line',{x1:x,x2:x,y1:60,y2:grand?270:140,stroke:'#000','stroke-width':2},svg);}
     el('line',{x1:right,x2:right,y1:60,y2:grand?270:140,stroke:'#000','stroke-width':b1>=so.total?5:2},svg);
     const ns=so.notes.map((n,i)=>[n,i]).filter(([n])=>n.beat>=b0-1e-6&&n.beat<b1-1e-6);
     const beam={};ns.forEach(([n,i])=>{if(n.rest||n.dur!==.5||n.beat%1!==0)return;const j=so.notes.findIndex((q,z)=>z>i&&!q.rest&&q.dur===.5&&q.beat===n.beat+.5&&q.staff===n.staff);if(j>0){beam[i]=[j,1];beam[j]=[i,0];}});
