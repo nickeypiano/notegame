@@ -492,7 +492,7 @@ function highlightPractice(){
   $('name').textContent='';info(`${so.name}　${G.idx} / ${so.notes.length}`);
 }
 function practiceInput(m,src){
-  if(src!=='kbd'&&src!=='key'&&performance.now()-(G.advT||0)<160)return;
+  if(src!=='kbd'&&src!=='key'&&performance.now()-(G.advT||0)<300)return;
   const so=curSong();if(G.idx>=so.notes.length)return;const nt=so.notes[G.idx];
   if(same(m,mid(nt.n),src)){
     G.res[G.idx]='done';markNote(G.idx,'done');$('name').textContent=nt.n.solfa;
@@ -618,14 +618,17 @@ function micLoop(){
   mic.hist.push(rms);if(mic.hist.length>8)mic.hist.shift();
   const minR=Math.min(...mic.hist.slice(0,-1));
   const now=ac.currentTime;
-  if(rms>.02&&rms>minR*2.5&&now-(mic.lastT||0)>.18){mic.armed=true;}
-  if(S.mode==='rhythm'){if(mic.armed&&rms>.03){mic.armed=false;mic.lastT=now;input(71,'mic');}mic.raf=requestAnimationFrame(micLoop);return;}
+  mic.peak=Math.max(mic.peak||0,rms);mic.trough=Math.min(mic.trough==null?rms:mic.trough,rms);
+  const gap=now-(mic.lastT||0);
+  if(rms>.02&&rms>minR*2.5&&gap>.25&&(mic.lastT==null||mic.lastT===0||mic.trough<mic.peak*.55)&&rms>mic.trough*2){mic.armed=true;}
+  if(S.mode==='rhythm'){if(mic.armed&&rms>.03){mic.armed=false;mic.lastT=now;mic.peak=rms;mic.trough=rms;input(71,'mic');}mic.raf=requestAnimationFrame(micLoop);return;}
   let m=-1;if(f>70&&f<2200)m=Math.round(69+12*Math.log2(f/440));
   if(m>0&&m===mic.cand)mic.cnt++;else{mic.cand=m;mic.cnt=1;}
-  if(m>0&&mic.cnt>=2&&(mic.armed||(m!==mic.lastEmit&&now-(mic.lastT||0)>.12))){
-    mic.armed=false;mic.lastT=now;mic.lastEmit=m;$('heard').textContent=SOLFA[m%12];input(m,'mic');
+  const newPc=mic.lastEmit==null||((m-mic.lastEmit)%12+12)%12!==0;
+  if(m>0&&mic.cnt>=3&&(mic.armed||(newPc&&gap>.15))){
+    mic.armed=false;mic.lastT=now;mic.peak=rms;mic.trough=rms;mic.lastEmit=m;$('heard').textContent=SOLFA[m%12];input(m,'mic');
   }
-  if(rms<.008){mic.lastEmit=null;}
+  if(rms<.006){mic.lastEmit=null;}
   mic.raf=requestAnimationFrame(micLoop);
 }
 $('micBtn').onclick=()=>mic.on?micStop():micStart();
