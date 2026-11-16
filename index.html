@@ -782,7 +782,7 @@ function playSong(so,tempoBpm){
 }
 
 /* ---------- accompaniment ---------- */
-const CHORDS=[[0,[0,4,7],.25],[5,[5,9,0],.15],[7,[7,11,2,5],.1],[9,[9,0,4],-.3],[2,[2,5,9],-1],[4,[4,7,11],-1]];
+const CHORDS=[[0,[0,4,7],.25],[5,[5,9,0],.15],[7,[7,11,2,5],.1]];
 function harmony(so){const m=so.meter||4;const bars=Math.ceil(so.total/m);const out=[];
   for(let b=0;b<bars;b++){const w=new Array(12).fill(0);so.notes.forEach(n=>{if(n.rest||n.d==null)return;const s0=Math.max(n.beat,b*m),e0=Math.min(n.beat+n.dur,(b+1)*m);if(e0>s0)w[midiOf(n.d)%12]+=(e0-s0)*(n.beat>=b*m&&n.beat<b*m+.01?1.5:1);});
     let best=CHORDS[0],bs=-1;CHORDS.forEach(c=>{let sc=c[1].reduce((a,pc,ix)=>a+w[pc]*(ix===3?.4:1),0)+c[2];if(b===bars-1&&c[0]===0)sc+=5;if(b===0&&c[0]===0)sc+=1;if(sc>bs){bs=sc;best=c;}});out.push(best);}
@@ -795,7 +795,7 @@ function accLight(m,t,dur,vol,dest){const a=audio();const o=a.createOscillator()
 function accStop(){clearInterval(accTimer);accTimer=null;accQ=[];}
 function accomp(so,t0,spb,dest){if(!accOn(so))return;const m=so.meter||4;const H=harmony(so);const low=clefKey()==='bass';const V=[.8,1.5,2.3][S.accVol==null?1:S.accVol]*(mic.on?.7:1);
   H.forEach((c,b)=>{const root=c[0],tri=c[1].slice(0,3);const bt=t0+b*m*spb;const last=b===H.length-1;
-    const bassR=(low?24:36)+root,bassF=bassR+7;const ch=tri.map(pc=>{let x=(low?60:48)+pc;if(x<(low?60:52))x+=12;return x;}).sort((a,b)=>a-b);
+    const bassR=(low?24:36)+root,bassF=bassR+7;const r0=(low?60:48)+root;const ch=[r0,r0+4,r0+7];
     const ev=(f,t,mm,d,v)=>accQ.push({f,t,m:mm,d,v,dest});
     if(last){ev('b',bt,bassR,m*spb*1.2,.17*V);ch.forEach(x=>ev('c',bt,x,m*spb*1.1,.05*V));return;}
     if(m===3){ev('b',bt,bassR,spb*1.6,.17*V);[1,2].forEach(k=>ch.forEach(x=>ev('c',bt+k*spb,x,spb*.7,.035*V)));}
