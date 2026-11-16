@@ -2,14 +2,22 @@
 <html lang="zh-Hant">
 <head>
 <meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
 <title>小小音符找琴鍵</title>
+<link rel="manifest" href="/manifest.webmanifest">
+<link rel="apple-touch-icon" href="/icon-180.png">
+<link rel="icon" href="/icon-192.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="音符找琴鍵">
+<meta name="theme-color" content="#fdf6ea">
 <style>
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent;user-select:none;-webkit-user-select:none}
 :root{--bg:#fdf6ea;--ink:#4a3b2a;--card:#fff;--accent:#f4845f;--accent2:#f7b267;--soft:#fbe3c2;--ok:#43b97f;--bad:#e5626a;--line:#5b4a36}
 html,body{margin:0;height:100%;font-family:"PingFang TC","Noto Sans TC","Microsoft JhengHei",system-ui,sans-serif;background:var(--bg);color:var(--ink);overflow:hidden;touch-action:manipulation}
 body{background:radial-gradient(circle at 15% 10%,#fff3dc 0,transparent 40%),radial-gradient(circle at 90% 80%,#fde7d3 0,transparent 45%),var(--bg)}
-#app{display:flex;flex-direction:column;height:100%;max-width:1000px;margin:0 auto;padding:8px 10px}
+#app{display:flex;flex-direction:column;height:100%;max-width:1000px;margin:0 auto;padding:calc(8px + env(safe-area-inset-top)) calc(10px + env(safe-area-inset-right)) calc(8px + env(safe-area-inset-bottom)) calc(10px + env(safe-area-inset-left))}
 .head{display:flex;flex-direction:column}
 .bar{display:flex;align-items:center;gap:6px;justify-content:center;flex-wrap:wrap}
 .tabs{display:flex;background:#f3e2c7;border-radius:999px;padding:3px}
