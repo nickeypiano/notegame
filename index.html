@@ -314,6 +314,13 @@ body{background:radial-gradient(circle at 15% 10%,#fff3dc 0,transparent 40%),rad
   <div class="note">點貼紙可以再動一次！</div>
   <button class="btn" id="svClose">放回貼紙簿</button>
 </div>
+<div class="overlay hide" id="rhySetOv" style="z-index:13">
+  <div class="big">節奏要出現哪些拍子？</div>
+  <div style="font-size:16px;color:#a07f56;margin-bottom:8px" id="rsWho"></div>
+  <div class="row" id="rsList" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:560px"></div>
+  <div class="note">至少選一種音符。每次按「換一個」都會用這些拍子重新出題。</div>
+  <button class="btn" id="rsOk">好了</button>
+</div>
 <div class="overlay hide" id="songs">
   <div class="big">選一首曲子</div>
   <div class="note" style="margin:-4px 0 4px">在「跟著拍子演奏」拿到 1 顆星，就會打開下一首。</div>
@@ -606,11 +613,12 @@ function showSongs(){const L=songList();let h='';
   $('songsLegend').innerHTML=legendHtml();$('songs').classList.remove('hide');}
 function songSetup(){
   const L=songList();if(S.song>=L.length||!unlocked(S.song))S.song=0;const so=curSong();
-  let h=S.mode==='rhythm'?['第1級','第2級 休止符','第3級 八分音符','第4級 附點音符'].map((t,i)=>`<button class="chip ${i===(S.rlv||0)?'on':''}" data-r="${i}">${t}</button>`).join('')+`<button class="chip" id="newRhy">換一個</button>`
+  let h=S.mode==='rhythm'?['第1級','第2級 休止符','第3級 八分音符','第4級 附點音符'].map((t,i)=>`<button class="chip ${i===(S.rlv||0)?'on':''}" data-r="${i}">${t}</button>`).join('')+`<button class="chip ${S.rlv==='c'?'on':''}" id="rhyCustom">老師自訂</button>`+`<button class="chip" id="newRhy">換一個</button>`
    :`<button class="chip" id="pickSong" style="display:flex;align-items:center;gap:5px;font-size:16px">${NOTEI}<span>${L[S.song].name}</span><span style="display:flex">${miniStars(bestStars(S.song))}</span></button>`+(L[S.song].random?`<button class="chip" id="newRhy">換一首</button>`:'')+clefChips();
   if(S.mode!=='practice')h+=`<span class="sep"></span>`+TEMPOS.map((t,i)=>`<button class="chip ${i===S.tempo?'on':''}" data-t="${i}">${t.name}</button>`).join('')+`<button class="chip go" id="playBtn"><svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z" fill="#fff"/></svg><span>開始</span></button>`;
   $('sub').innerHTML=h;bindClef();if($('pickSong'))$('pickSong').onclick=showSongs;
   $('sub').querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{S.rlv=+b.dataset.r;G.rhy=null;save();enterMode('rhythm');});
+  if($('rhyCustom'))$('rhyCustom').onclick=()=>{if(S.rlv==='c'){askPin(showRhySet);}else{S.rlv='c';G.rhy=null;save();if(!(CUR&&CUR.prog&&CUR.prog.rhySet))askPin(showRhySet);else enterMode('rhythm');}};
   if($('newRhy'))$('newRhy').onclick=()=>{G.rhy=null;G.rand=null;enterMode(S.mode);};
   $('sub').querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{S.song=+b.dataset.s;save();enterMode(S.mode);});
   $('sub').querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{S.tempo=+b.dataset.t;save();enterMode(S.mode);});
@@ -638,7 +646,13 @@ const RPAT=[[[1,1,1,1],[2,1,1],[1,1,2],[2,2],[4],[1,1,1,1]],
  [[1,'r',1,1],[2,'r',1],[1,1,'r',1],[1,1,2],['r',1,1,1],[1,1,1,'r']],
  [[.5,.5,1,1,1],[1,.5,.5,1,1],[.5,.5,.5,.5,2],[1,1,.5,.5,1],[1,'r',.5,.5,1],[.5,.5,1,'r',1]],
  [[1.5,.5,1,1],[1,1.5,.5,1],[1.5,.5,2],[3,1],[2,1.5,.5],[1,1,1.5,.5],[3,'r']]];
-function genRhythm(){const lv=S.rlv||0;const notes=[];for(let bar=0;bar<4;bar++){let pool=[...RPAT[0]];for(let k=1;k<=lv;k++)pool=pool.concat(RPAT[k],RPAT[k]);
+const RUNITS=[['q','四分音符',[1]],['h','二分音符',[2]],['w','全音符',[4]],['r','四分休止符',['r']],['e','兩個八分音符',[.5,.5]],['dq','附點四分＋八分',[1.5,.5]],['dh','附點二分音符',[3]]];
+function rhySet(){return (CUR&&CUR.prog&&CUR.prog.rhySet)||['q','h'];}
+function genCustom(){const set=rhySet();const units=RUNITS.filter(u=>set.includes(u[0])).map(u=>u[2]);const len=u=>u.reduce((a,d)=>a+(d==='r'?1:d),0);const notes=[];
+  for(let bar=0;bar<4;bar++){let ok=false;for(let tries=0;tries<80&&!ok;tries++){let rem=4,seq=[];while(rem>0){const fit=units.filter(u=>len(u)<=rem);if(!fit.length)break;const u=pick(fit);seq.push(...u);rem-=len(u);}if(rem===0){ok=true;seq.forEach(d=>notes.push(d==='r'?{rest:true,dur:1}:{d:13,dur:d}));}}
+    if(!ok)[1,1,1,1].forEach(d=>notes.push({d:13,dur:d}));}
+  return finalize({name:'老師自訂節奏',tempo:80,notes,rhythm:true});}
+function genRhythm(){if(S.rlv==='c')return genCustom();const lv=S.rlv||0;const notes=[];for(let bar=0;bar<4;bar++){let pool=[...RPAT[0]];for(let k=1;k<=lv;k++)pool=pool.concat(RPAT[k],RPAT[k]);
   pick(pool).forEach(d=>notes.push(d==='r'?{rest:true,dur:1}:{d:13,dur:d}));}
   return finalize({name:'節奏',tempo:80,notes,rhythm:true});}
 function renderSong(){
@@ -895,7 +909,7 @@ function startSession(st){CUR=st;audio();G.sess={gains:[],left:DB.minutes*60};up
   say(`${st.name}，一起來玩吧！`);enterMode(S.mode);clearInterval(G.clockT);G.clockT=setInterval(tick,1000);tick();}
 function tick(){if(!G.sess)return;const c=$('clock');
   if(!DB.minutes){c.style.display='none';return;}c.style.display='';
-  const busy=['ended','settings','teacher','pin','songs','album','sticker','bookOv','stkView'].some(id=>!$(id).classList.contains('hide'));
+  const busy=['ended','settings','teacher','pin','songs','album','sticker','bookOv','stkView','rhySetOv'].some(id=>!$(id).classList.contains('hide'));
   if(!busy&&G.sess.left>0)G.sess.left--;
   const l=Math.max(0,G.sess.left);c.textContent=`${Math.floor(l/60)}:${String(l%60).padStart(2,'0')}`;c.classList.toggle('low',l<=30);
   if(l<=0&&!G.running&&$('win').classList.contains('hide')&&$('sticker').classList.contains('hide')&&$('ended').classList.contains('hide'))showEnded();}
@@ -908,6 +922,7 @@ $('endNext').onclick=()=>showPicker();
 $('endAlbum').onclick=()=>{$('ended').classList.add('hide');openBook();};
 $('endMore').onclick=()=>askPin(()=>{G.sess.left=120;$('ended').classList.add('hide');tick();});
 $('studBtn').onclick=()=>{if(CUR)openBook();};
+$('rsOk').onclick=()=>{const sel=[...$('rsList').querySelectorAll('.chip.on')].map(b=>b.dataset.u);if(!sel.some(u=>u!=='r'))return toast('至少要選一種音符（不能只有休止符）');if(CUR){CUR.prog=CUR.prog||{};CUR.prog.rhySet=sel;saveDB();}$('rhySetOv').classList.add('hide');S.rlv='c';G.rhy=null;save();enterMode('rhythm');};
 $('svBox').onclick=()=>{const b=$('svBox');const cl=b.className;b.className='svbox';void b.offsetWidth;b.className=cl+' boost';playStk(catOf(STK.findIndex(x=>x[0]===$('svName').textContent)));};
 $('svClose').onclick=()=>$('stkView').classList.add('hide');
 $('bPrev').onclick=()=>{if(bookPage>0){bookPage--;drawBook(-1);}};$('bNext').onclick=()=>{bookPage++;drawBook(1);};
@@ -1001,6 +1016,9 @@ function drawBook(anim){const own={};(CUR.stickers||[]).forEach(x=>own[x.i]=(own
   bk.querySelectorAll('.bslot.got').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;const x=(CUR.stickers||[]).find(z=>z.i===i);showSticker(i,x&&x.song);});
   $('bPrev').disabled=bookPage===0;$('bNext').disabled=bookPage>=pages-1;$('bookPageNo').textContent=`${bookPage+1} / ${pages}`;}
 function stickerBook(st){const L=st.stickers||[];return `<div class="tier">我的貼紙（${L.length} 張）</div>`+(L.length?`<div class="book">`+L.map(x=>`<div class="bk" title="${x.song}">${stickerSvg(x.i)}<span>${x.song}</span></div>`).join('')+'</div>':'<div class="note" style="margin:0">曲子拿到三顆星，就能選一張貼紙！</div>');}
+function showRhySet(){const set=rhySet();$('rsList').innerHTML=RUNITS.map(u=>`<button class="chip ${set.includes(u[0])?'on':''}" data-u="${u[0]}">${u[1]}</button>`).join('');
+  $('rsList').querySelectorAll('.chip').forEach(b=>b.onclick=()=>b.classList.toggle('on'));$('rsWho').textContent=CUR?`幫 ${CUR.name} 選要練習的拍子（會記住）`:'';$('rhySetOv').classList.remove('hide');}
+$('rsOk')&&0;
 /* PIN */
 let pinCb=null,pinBuf='';
 function askPin(cb){pinCb=cb;pinBuf='';drawPin();$('pin').classList.remove('hide');}
