@@ -628,7 +628,8 @@ function readInput(m,src){
 }
 
 /* ---------- SONG staff ---------- */
-const BEAT=72,X0=70,FIXW=118;
+const BEAT=72,X0=70,FIXW=118,BPAD=30;
+function xb(b){const m=G.meterR||4;const bar=Math.floor(b/m+1e-9);const f=b-bar*m;return X0+b*BEAT+bar*BPAD+Math.max(0,f-(m-.5))/.5*BPAD;}
 function bestStars(i,c=clefKey()){const L=c==='grand'?GSONGS:SONGS;const P=(CUR&&CUR.prog)||{};return P['perf_'+L[i].name+'_'+c]||0;}
 function hasProg(i,c){const L=c==='grand'?GSONGS:SONGS;const P=(CUR&&CUR.prog)||{};const n=L[i].name;return !!(P['perf_'+n+'_'+c]||P['prac_'+n+'_'+c]);}
 function unlocked(i,c=clefKey()){if(i===0||!CUR)return true;if(CUR.prog&&CUR.prog.unlockAll)return true;return bestStars(i,c)>=1||bestStars(i-1,c)>=1||hasProg(i,c);}
@@ -647,7 +648,7 @@ function songSetup(){
   if(S.mode!=='practice')h+=`<span class="sep"></span>`+TEMPOS.map((t,i)=>`<button class="chip ${i===S.tempo?'on':''}" data-t="${i}">${t.name}</button>`).join('')+`<button class="chip go" id="playBtn"><svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z" fill="#fff"/></svg><span>開始</span></button>`;
   $('sub').innerHTML=h;bindClef();if($('pickSong'))$('pickSong').onclick=showSongs;
   $('sub').querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{S.rlv=+b.dataset.r;G.rhy=null;save();enterMode('rhythm');});
-  if($('rhyCustom'))$('rhyCustom').onclick=()=>{if(S.rlv==='c'){askPin(showRhySet);}else{S.rlv='c';G.rhy=null;save();if(!(CUR&&CUR.prog&&CUR.prog.rhySet))askPin(showRhySet);else enterMode('rhythm');}};
+  if($('rhyCustom'))$('rhyCustom').onclick=()=>{S.rlv='c';save();showRhySet();};
   if($('newRhy'))$('newRhy').onclick=()=>{G.rhy=null;G.rand=null;enterMode(S.mode);};
   $('sub').querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{S.song=+b.dataset.s;save();enterMode(S.mode);});
   $('sub').querySelectorAll('[data-t]').forEach(b=>b.onclick=()=>{S.tempo=+b.dataset.t;save();enterMode(S.mode);});
@@ -690,24 +691,24 @@ function renderSong(){
   const cw=Math.max(1,wrap.clientWidth),ch=Math.max(1,wrap.clientHeight);
   const sc=Math.min(ch/H0,cw/(cw<520?360:(grand?560:640))),W=cw/sc,H=ch/sc;G.W=W;
   svg.setAttribute('viewBox',`0 ${Y0-(H-H0)/2} ${W} ${H}`);svg.innerHTML='';
-  const len=X0+so.total*BEAT+40;const top=60,bot=grand?270:140;
+  G.meterR=so.meter||4;const len=xb(so.total)+40;const top=60,bot=grand?270:140;
   const scroll=el('g',{},svg);G.scroll=scroll;
   G.hl=el('rect',{x:-30,y:top-30,width:56,height:bot-top+60,rx:16,fill:'#fff1c2',opacity:0},scroll);
   if(so.rhythm)el('line',{x1:-50,x2:len+W,y1:100,y2:100,stroke:'#5b4a36','stroke-width':2},scroll);else allLines(scroll,-50,len+W);
   G.ng=[];
   const by1=so.rhythm?80:top,by2=so.rhythm?120:bot;
-  const MT=so.meter||4;for(let b=MT;b<so.total;b+=MT){const x=X0+b*BEAT-26;el('line',{x1:x,x2:x,y1:by1,y2:by2,stroke:'#5b4a36','stroke-width':2},scroll);}
-  const ex=X0+so.total*BEAT-10;el('line',{x1:ex,x2:ex,y1:by1,y2:by2,stroke:'#5b4a36','stroke-width':2},scroll);el('rect',{x:ex+5,y:by1,width:6,height:by2-by1,fill:'#5b4a36'},scroll);
+  const MT=so.meter||4;for(let b=MT;b<so.total;b+=MT){const x=xb(b)-30;el('line',{x1:x,x2:x,y1:by1,y2:by2,stroke:'#5b4a36','stroke-width':2},scroll);}
+  const ex=xb(so.total)-14;el('line',{x1:ex,x2:ex,y1:by1,y2:by2,stroke:'#5b4a36','stroke-width':2},scroll);el('rect',{x:ex+5,y:by1,width:6,height:by2-by1,fill:'#5b4a36'},scroll);
   // beams: pair of eighths starting on a beat, same staff
   const beamOf={};so.notes.forEach((nt,i)=>{if(nt.rest||nt.dur!==.5||nt.beat%1!==0)return;const j=so.notes.findIndex((m,k)=>k>i&&!m.rest&&m.dur===.5&&m.beat===nt.beat+.5&&m.staff===nt.staff);if(j>0){beamOf[i]={pair:j,first:true};beamOf[j]={pair:i,first:false};}});
-  so.notes.forEach((nt,i)=>{const x=X0+nt.beat*BEAT;let g;
+  so.notes.forEach((nt,i)=>{const x=xb(nt.beat);let g;
     if(nt.rest){if(grand){G.ng.push(null);return;}g=el('g',{style:'--c:#4a3b2a'},scroll);el('path',{class:'nf',d:`M${x-4} 76l9 11-6 8 8 11c-6-3-11-1-8 6-8-6-6-12 0-11l-9-11 7-7-4-5z`},g);}
     else{const ly=so.rhythm?100:localY(nt.d,nt.staff),oy=so.rhythm?0:staffOff(nt.staff);const o={rhythm:so.rhythm};const bm=beamOf[i];
       if(bm){const a=bm.first?nt:so.notes[bm.pair],b=bm.first?so.notes[bm.pair]:nt;const la=so.rhythm?100:localY(a.d,a.staff),lb=so.rhythm?100:localY(b.d,b.staff);
         const up=so.rhythm||(la+lb)/2>100;o.up=up;o.noFlag=true;
         // beam line: straight between stem tips, at the extreme
         const tipA=up?Math.min(la,lb)-68:Math.max(la,lb)+68;o.stemLen=Math.abs(ly-tipA);
-        if(bm.first){const xa=x+(up?12.5:-12.5),xb=X0+b.beat*BEAT+(up?12.5:-12.5);const ty=tipA+oy;
+        if(bm.first){const xa=x+(up?12.5:-12.5),xb=xb(b.beat)+(up?12.5:-12.5);const ty=tipA+oy;
           G.beams=G.beams||[];G.beams.push({i,j:bm.pair,d:`M${xa-1.5} ${ty-(up?0:6)}L${xb+1.5} ${ty-(up?0:6)}L${xb+1.5} ${ty+(up?7:1)}L${xa-1.5} ${ty+(up?7:1)}z`});}}
       g=drawNoteY(scroll,x,ly,oy,nt.dur,so.rhythm?'#4a3b2a':dColor(nt.d),o);}
     G.ng.push({g,x,y:(so.rhythm?100:localY(nt.d,nt.staff)+staffOff(nt.staff))||100});});
@@ -732,7 +733,7 @@ function markNote(i,r,silent){const ng=G.ng[i];if(!ng)return;const col=r==='bad'
 
 /* ---------- PRACTICE ---------- */
 function highlightPractice(){
-  const so=curSong();if(G.idx>=G.ev.length)return;const ev=G.ev[G.idx];const x=X0+ev.beat*BEAT;
+  const so=curSong();if(G.idx>=G.ev.length)return;const ev=G.ev[G.idx];const x=xb(ev.beat);
   G.hl.setAttribute('x',x-28);G.hl.setAttribute('opacity',1);G.got=new Set();
   setOffset(G.fixX-x,true);clearKeys();G.wrong=0;
   $('name').textContent='';info(`${so.name}　${G.idx} / ${G.ev.length}`+(ev.idx.length>1?'　<span style="color:#f4845f">兩個音一起彈！</span>':''));
@@ -772,10 +773,10 @@ function startPerform(demo=true){
   G.spb=spb;G.st=st;G.running=true;G.lastBeat=-99;
   $('playBtn').querySelector('span').textContent=demo?'跳過示範':'停止';G.inDemo=demo;
   const loop=()=>{if(!G.running)return;
-    if(G.inDemo){const db=(ac.currentTime-G.demoT)/G.spb;if(db<so.total+.3){setOffset(G.fixX-14-(X0+Math.max(0,db)*BEAT));if(G.lastBeat!=='demo'){G.lastBeat='demo';say('先聽一次怎麼彈');}G.raf=requestAnimationFrame(loop);return;}
+    if(G.inDemo){const db=(ac.currentTime-G.demoT)/G.spb;if(db<so.total+.3){setOffset(G.fixX-14-(xb(Math.max(0,db))));if(G.lastBeat!=='demo'){G.lastBeat='demo';say('先聽一次怎麼彈');}G.raf=requestAnimationFrame(loop);return;}
       G.inDemo=false;G.lastBeat=-99;$('playBtn').querySelector('span').textContent='停止';}
     const bt=(ac.currentTime-G.st)/G.spb;
-    setOffset(G.fixX-14-(X0+Math.max(bt,-.0001)*BEAT));
+    setOffset(G.fixX-14-(xb(Math.max(bt,0))));
     const whole=Math.floor(bt);const MT=G.mt;if(whole!==G.lastBeat){G.lastBeat=whole;if(bt>=-MT)beats(((whole%MT)+MT)%MT);
       if(bt<0&&bt>=-MT)say(['預備…1','2','3','4'][whole+MT]||'');else if(whole===0)say('開始！');}
     so.notes.forEach((nt,i)=>{if(!G.res[i]&&bt>nt.beat+.5){G.res[i]='miss';markNote(i,'miss');}});
@@ -814,12 +815,12 @@ function speakNum(n){try{const u=new SpeechSynthesisUtterance(CNUM[n]);u.lang='z
 function stopCount(){countT.forEach(clearTimeout);countT=[];try{speechSynthesis.cancel();}catch(e){}}
 function scheduleCount(so,t0,spb){stopCount();if(so.rhythm&&false)return;const seen=new Set();
   so.notes.forEach(nt=>{if(nt.rest||nt.dur<2)return;for(let k=1;k<Math.floor(nt.dur);k++){const b=nt.beat+k;if(seen.has(b))continue;seen.add(b);const n=k+1;
-    const ms=(t0+b*spb-ac.currentTime)*1000-60;countT.push(setTimeout(()=>{speakNum(n);if(G.marks){const t=el('text',{x:X0+b*BEAT,y:G.markY-6,'text-anchor':'middle','font-size':30,'font-weight':900,fill:'#f4845f'},G.marks);t.textContent=n;t.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none',offset:.2},{opacity:1,offset:.7},{opacity:0}],{duration:900,fill:'forwards'});setTimeout(()=>t.remove(),950);}},Math.max(0,ms)));}});}
+    const ms=(t0+b*spb-ac.currentTime)*1000-60;countT.push(setTimeout(()=>{speakNum(n);if(G.marks){const t=el('text',{x:xb(b),y:G.markY-6,'text-anchor':'middle','font-size':30,'font-weight':900,fill:'#f4845f'},G.marks);t.textContent=n;t.animate([{opacity:0,transform:'translateY(10px)'},{opacity:1,transform:'none',offset:.2},{opacity:1,offset:.7},{opacity:0}],{duration:900,fill:'forwards'});setTimeout(()=>t.remove(),950);}},Math.max(0,ms)));}});}
 function demoScroll(){const so=curSong();stopPerform();const tempo=S.mode==='practice'?so.tempo*.8:bpm();const {t0,spb}=playSong(so,tempo);G.demoRun=true;scheduleCount(so,t0,spb);
   if(G.hl)G.hl.setAttribute('opacity',S.mode==='practice'?1:0);say('仔細聽，看譜跟著走');
   const loop=()=>{if(!G.demoRun)return;const db=(ac.currentTime-t0)/spb;
-    if(S.mode==='practice'){let e=0;for(let k=0;k<G.ev.length;k++)if(G.ev[k].beat<=db+.01)e=k;const x=X0+G.ev[e].beat*BEAT;G.hl.setAttribute('x',x-28);}
-    setOffset(G.fixX-14-(X0+Math.max(0,db)*BEAT));
+    if(S.mode==='practice'){let e=0;for(let k=0;k<G.ev.length;k++)if(G.ev[k].beat<=db+.01)e=k;const x=xb(G.ev[e].beat);G.hl.setAttribute('x',x-28);}
+    setOffset(G.fixX-14-(xb(Math.max(0,db))));
     if(db>so.total+.3){G.demoRun=false;if(S.mode==='practice'){highlightPractice();say('換你彈彈看！');}else{setOffset(G.fixX-14-X0);say('按「開始」挑戰看看！');}return;}
     requestAnimationFrame(loop);};requestAnimationFrame(loop);}
 $('listen').onclick=()=>{audio();if(S.mode==='read'){if(G.target)tone(midiOf(G.target.d),0,1.2,.3);}else demoScroll();};
@@ -1011,14 +1012,24 @@ const STK=[
  ['挖土機','#fff0c2','<rect x="10" y="36" width="28" height="7" rx="3.5" fill="#4a3b2a"/><rect x="13" y="24" width="20" height="12" rx="2" fill="#f2b705"/><rect x="16" y="17" width="10" height="9" rx="1" fill="#f2b705"/><rect x="18" y="19" width="6" height="5" fill="#dff3ff"/><path d="M33 28l10-12 6 8" stroke="#e6a000" stroke-width="4" fill="none" stroke-linejoin="round"/><path d="M46 22l6 4-2 8-8-3z" fill="#8d6e63"/>'],
  ['小火車','#ffe7cc','<rect x="12" y="20" width="14" height="16" rx="2" fill="#e5484d"/><rect x="15" y="23" width="8" height="6" fill="#dff3ff"/><rect x="26" y="26" width="22" height="10" rx="2" fill="#5b5bd6"/><rect x="38" y="18" width="5" height="8" fill="#4a3b2a"/><circle cx="41" cy="13" r="3" fill="#ddd"/><circle cx="18" cy="39" r="4" fill="#3b2f22"/><circle cx="32" cy="39" r="4" fill="#3b2f22"/><circle cx="43" cy="39" r="4" fill="#3b2f22"/>'],
  ['飛機','#dff3ff','<path d="M10 32l34-6q6 0 6 3t-6 3z" fill="#fff" stroke="#0fa3c7" stroke-width="2"/><path d="M28 29l-6-12h5l10 11zM28 32l-4 9h5l7-9z" fill="#0fa3c7"/><path d="M12 31l-2-7h4l4 6z" fill="#e5484d"/><circle cx="40" cy="29" r="1.5" fill="#0fa3c7"/><circle cx="35" cy="30" r="1.5" fill="#0fa3c7"/>'],
- ['垃圾車','#e2f6e8','<rect x="8" y="18" width="28" height="20" rx="3" fill="#30a46c"/><path d="M36 38V24h8l6 7v7z" fill="#30a46c"/><path d="M38 26h5l4 5h-9z" fill="#dff3ff"/><path d="M14 23v10M20 23v10M26 23v10" stroke="#1f7a4a" stroke-width="2"/><circle cx="16" cy="40" r="4.5" fill="#3b2f22"/><circle cx="42" cy="40" r="4.5" fill="#3b2f22"/>']];
-const FACE={0:[25,41,.45],2:[30,39,.6],3:[30,32,.9],5:[30,30,.42],6:[30,34,.65],7:[30,31,.8],8:[30,29,.6],10:[30,22,.6],11:[30,31,.75],12:[23,30,.6],14:[30,34,.8],15:[30,35,.65],16:[30,24,.55],17:[30,25,.7],22:[30,32,.45],23:[29,34,.45],26:[30,32,.6],27:[30,38,.6],28:[30,24,.7],29:[30,21,.55],35:[30,36,.7],36:[24,35,.45],37:[20,32,.45],38:[17,36,.38],39:[42,34,.4],40:[23,31,.42],41:[19,33,.4],43:[22,30,.5]};
+ ['垃圾車','#e2f6e8','<rect x="8" y="18" width="28" height="20" rx="3" fill="#30a46c"/><path d="M36 38V24h8l6 7v7z" fill="#30a46c"/><path d="M38 26h5l4 5h-9z" fill="#dff3ff"/><path d="M14 23v10M20 23v10M26 23v10" stroke="#1f7a4a" stroke-width="2"/><circle cx="16" cy="40" r="4.5" fill="#3b2f22"/><circle cx="42" cy="40" r="4.5" fill="#3b2f22"/>'],
+ ['小船','#dff3ff','<path d="M30 12v24" stroke="#8d6e63" stroke-width="2"/><path d="M31 13l13 20H31z" fill="#fff" stroke="#9ccbe8" stroke-width="1.5"/><path d="M29 16L19 33h10z" fill="#f4845f"/><path d="M12 37h36l-6 9H18z" fill="#e5484d"/><path d="M8 48q5-3 11 0t11 0 11 0 11 0" stroke="#0fa3c7" stroke-width="2.5" fill="none"/>'],
+ ['直升機','#fff3c4','<path d="M12 17h34M29 17v5" stroke="#4a3b2a" stroke-width="2.5" stroke-linecap="round"/><path d="M16 32q0-10 13-10q13 0 13 10q0 7-13 7q-13 0-13-7z" fill="#0fa3c7"/><path d="M33 25q7 0 8 7h-8z" fill="#dff3ff"/><path d="M16 31H6l-2-4" stroke="#0fa3c7" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M20 43h20M24 39v4M34 39v4" stroke="#4a3b2a" stroke-width="2.5" stroke-linecap="round"/>'],
+ ['吉他','#ffe7cc','<path d="M38 10l5 5-11 11" stroke="#8d6e63" stroke-width="4" stroke-linecap="round"/><path d="M30 24c-6-3-14 0-14 8c-6 3-5 12 3 13c4 1 7-2 8-5c7-1 10-9 3-16z" fill="#f2a541"/><circle cx="25" cy="34" r="3.5" fill="#8d4f1a"/><path d="M40 12l3 3" stroke="#4a3b2a" stroke-width="2"/>'],
+ ['小喇叭','#fff6d6','<path d="M12 27h20l12-8v22l-12-8H12z" fill="#f2b705" stroke="#d68c00" stroke-width="1.5" stroke-linejoin="round"/><rect x="18" y="21" width="3" height="6" fill="#d68c00"/><rect x="23" y="21" width="3" height="6" fill="#d68c00"/><g stroke="#e5484d" stroke-width="2" stroke-linecap="round"><path d="M48 22l4-3M49 30h5M48 38l4 3"/></g>'],
+ ['蘑菇','#ffe3e3','<path d="M12 30q0-17 18-17t18 17z" fill="#e5484d"/><circle cx="22" cy="21" r="3" fill="#fff"/><circle cx="35" cy="18" r="2.5" fill="#fff"/><circle cx="40" cy="26" r="2" fill="#fff"/><path d="M22 30h16v10q0 6-8 6t-8-6z" fill="#fff4e3" stroke="#e8cfb4" stroke-width="1.5"/>'],
+ ['葉子','#e2f6e8','<path d="M14 44q0-30 32-30q0 32-32 30z" fill="#30a46c"/><path d="M16 42q12-12 26-24" stroke="#1f7a4a" stroke-width="2" fill="none" stroke-linecap="round"/>'],
+ ['鬱金香','#fde7f1','<path d="M30 30v16" stroke="#30a46c" stroke-width="3"/><path d="M30 42q-8-8-12-4q4 6 12 6zM30 40q8-8 12-4q-4 6-12 6z" fill="#30a46c"/><path d="M20 16l5 5 5-8 5 8 5-5q2 14-10 16q-12-2-10-16z" fill="#f7a1c4"/>'],
+ ['仙人掌','#fff1e0','<path d="M25 46V18q0-6 5-6t5 6v28z" fill="#30a46c"/><path d="M25 32h-5q-4 0-4-4v-6M35 28h5q4 0 4-4v-5" stroke="#30a46c" stroke-width="6" stroke-linecap="round" fill="none"/><path d="M20 44h20l-2 6H22z" fill="#c9603e"/><circle cx="30" cy="11" r="3" fill="#f7a1c4"/>'],
+ ['鑽石','#e6f4fb','<path d="M18 18h24l7 9-19 21-19-21z" fill="#7fd0f0" stroke="#3aa8d8" stroke-width="1.5" stroke-linejoin="round"/><path d="M11 27h38M24 18l-3 9 9 21 9-21-3-9" stroke="#3aa8d8" stroke-width="1.2" fill="none"/><path d="M22 21l-2 4" stroke="#fff" stroke-width="2" stroke-linecap="round"/>'],
+ ['禮物','#f6e3fb','<rect x="14" y="26" width="32" height="20" rx="2" fill="#c24ccf"/><rect x="12" y="20" width="36" height="8" rx="2" fill="#d77ee0"/><rect x="27" y="20" width="6" height="26" fill="#ffd166"/><path d="M30 20q-10-10-12-4q0 4 12 4q12 0 12-4q-2-6-12 4z" fill="#ffd166"/>']];
+const FACE={44:[33,40,.4],45:[25,31,.45],48:[30,38,.45],49:[29,31,.5],50:[30,24,.45],51:[30,30,.45],52:[30,29,.5],53:[22,36,.45],0:[25,41,.45],2:[30,39,.6],3:[30,32,.9],5:[30,30,.42],6:[30,34,.65],7:[30,31,.8],8:[30,29,.6],10:[30,22,.6],11:[30,31,.75],12:[23,30,.6],14:[30,34,.8],15:[30,35,.65],16:[30,24,.55],17:[30,25,.7],22:[30,32,.45],23:[29,34,.45],26:[30,32,.6],27:[30,38,.6],28:[30,24,.7],29:[30,21,.55],35:[30,36,.7],36:[24,35,.45],37:[20,32,.45],38:[17,36,.38],39:[42,34,.4],40:[23,31,.42],41:[19,33,.4],43:[22,30,.5]};
 function face(x,y,k){return `<g class="kface"><ellipse cx="${x-10*k}" cy="${y+3.5*k}" rx="${3.4*k}" ry="${2.2*k}" fill="#ff8fa3" opacity=".65"/><ellipse cx="${x+10*k}" cy="${y+3.5*k}" rx="${3.4*k}" ry="${2.2*k}" fill="#ff8fa3" opacity=".65"/><g class="keyes"><ellipse cx="${x-6*k}" cy="${y-1*k}" rx="${2.3*k}" ry="${2.8*k}" fill="#3b2f22"/><ellipse cx="${x+6*k}" cy="${y-1*k}" rx="${2.3*k}" ry="${2.8*k}" fill="#3b2f22"/><circle cx="${x-5.2*k}" cy="${y-2*k}" r="${.9*k}" fill="#fff"/><circle cx="${x+6.8*k}" cy="${y-2*k}" r="${.9*k}" fill="#fff"/></g><path d="M${x-2.6*k} ${y+2.6*k}q${2.6*k} ${3*k} ${5.2*k} 0" stroke="#3b2f22" stroke-width="${1.3*k}" fill="none" stroke-linecap="round"/></g>`;}
 function stickerSvg(i){const[n,bg,ic]=STK[i];const f=FACE[i]?face(...FACE[i]):'';
   return `<svg viewBox="-2 -2 64 64" class="stk"><circle cx="30" cy="31.5" r="28.5" fill="#000" opacity=".1"/><circle cx="30" cy="30" r="28.5" fill="#fff"/><circle cx="30" cy="30" r="25" fill="${bg}"/><g class="sart">${ic}${f}</g><path d="M14 16a20 20 0 0 1 12-8" stroke="#fff" stroke-width="3" stroke-linecap="round" fill="none" opacity=".7"/></svg>`;}
 function catOf(i){const c=CATS.find(c=>c[2].includes(i));return c?c[0]:'寶物';}
-const ANIM={'恐龍':'a-stomp','車車':'a-drive','動物':'a-hop','音樂':'a-dance','美食':'a-jelly','大自然':'a-float','寶物':'a-shine'};
-const SND={'恐龍':[[48,0],[48,.25],[43,.5]],'車車':[[67,0],[64,.12],[67,.24],[64,.36]],'動物':[[72,0],[76,.1],[79,.2]],'音樂':[[60,0],[64,.12],[67,.24],[72,.36]],'美食':[[76,0],[74,.1],[72,.2],[79,.32]],'大自然':[[72,0],[79,.2],[84,.4]],'寶物':[[79,0],[84,.1],[88,.2],[91,.3]]};
+const ANIM={'交通工具':'a-drive','天空':'a-float','花園':'a-jelly','恐龍':'a-stomp','車車':'a-drive','動物':'a-hop','音樂':'a-dance','美食':'a-jelly','大自然':'a-float','寶物':'a-shine'};
+const SND={'交通工具':[[67,0],[71,.12],[74,.24]],'天空':[[72,0],[79,.2],[84,.4]],'花園':[[76,0],[79,.12],[84,.24]],'恐龍':[[48,0],[48,.25],[43,.5]],'車車':[[67,0],[64,.12],[67,.24],[64,.36]],'動物':[[72,0],[76,.1],[79,.2]],'音樂':[[60,0],[64,.12],[67,.24],[72,.36]],'美食':[[76,0],[74,.1],[72,.2],[79,.32]],'大自然':[[72,0],[79,.2],[84,.4]],'寶物':[[79,0],[84,.1],[88,.2],[91,.3]]};
 function showSticker(i,song){const c=catOf(i);$('svBox').innerHTML=stickerSvg(i);$('svBox').className='svbox '+ANIM[c];$('svName').textContent=STK[i][0];$('svSub').textContent=song?`${c}・〈${song}〉拿到的`:c;$('stkView').classList.remove('hide');playStk(c);}
 function playStk(c){if(!sfxOn())return;(SND[c]||SND['寶物']).forEach(([m,t])=>tone(m,t,.4,.22));}
 function offerSticker(song){if(!CUR)return;CUR.stickers=CUR.stickers||[];const own=new Set(CUR.stickers.map(x=>x.i));
@@ -1029,7 +1040,7 @@ function offerSticker(song){if(!CUR)return;CUR.stickers=CUR.stickers||[];const o
   $('stkChoices').querySelectorAll('.stkc').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;CUR.stickers.push({i,song,d:new Date().toISOString().slice(0,10)});saveDB();if(G.sess)G.sess.gains.push(`貼紙「${STK[i][0]}」`);
     $('stkChoices').innerHTML=`<div class="stkc big1">${stickerSvg(i)}<b>${STK[i][0]}</b></div>`;$('stkSong').textContent='貼進貼紙簿了！';setTimeout(()=>$('sticker').classList.add('hide'),1600);});
   $('sticker').classList.remove('hide');setTimeout(()=>{fanfare();confetti();},150);}
-const CATS=[['恐龍','#2f8f5b',[30,31,32,33,34,35]],['車車','#d9483b',[23,36,37,38,39,40,41,43,42,22]],['動物','#c9603e',[1,18,19,20,21,24]],['音樂','#5b5bd6',[0,2,6,7]],['美食','#c24ccf',[14,15,16,25,26,27]],['大自然','#0f8fb3',[4,12,13,9,11,5,28,29]],['寶物','#d68c00',[3,8,10,17]]];
+const CATS=[['恐龍','#2f8f5b',[30,31,32,33,34,35]],['車車','#d9483b',[23,36,37,38,39,43]],['交通工具','#3b6fc4',[41,40,42,22,44,45]],['動物','#c9603e',[1,18,19,20,21,24]],['音樂','#5b5bd6',[0,2,6,7,46,47]],['美食','#c24ccf',[14,15,16,25,26,27]],['天空','#0f8fb3',[4,12,13,9,11,29]],['花園','#30a46c',[5,28,48,49,50,51]],['寶物','#d68c00',[3,8,10,17,52,53]]];
 let bookPage=0;
 function openBook(){if(!CUR)return;bookPage=0;drawBook();$('bookOv').classList.remove('hide');}
 function drawBook(anim){const own={};(CUR.stickers||[]).forEach(x=>own[x.i]=(own[x.i]||0)+1);const total=STK.length,got=Object.keys(own).length;
