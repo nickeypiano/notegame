@@ -294,33 +294,33 @@ const levels=()=>LV[clefKey()];
 function kbRange(){if(S.mode==='rhythm')return[7,14];const c=clefKey();return c==='bass'?[0,7]:c==='grand'?[0,14]:[7,14];}
 const SONGS=[
  {t:0,name:'月光下',tempo:90,s:'C4 C4 C4 D4 | E4:2 D4:2 | C4 E4 D4 D4 | C4:4 | C4 C4 C4 D4 | E4:2 D4:2 | C4 E4 D4 D4 | C4:4'},
- {t:0,name:'小鴨子',tempo:96,s:'C4 D4 E4 F4 | G4:2 G4:2 | A4 A4 A4 A4 | G4:4 | A4 A4 A4 A4 | G4:4 | F4 F4 F4 F4 | E4:2 E4:2 | D4 D4 D4 D4 | C4:4'},
  {t:0,name:'小蜜蜂',tempo:90,s:'G4 E4 E4:2 | F4 D4 D4:2 | C4 D4 E4 F4 | G4 G4 G4:2 | G4 E4 E4:2 | F4 D4 D4:2 | C4 E4 G4 G4 | C4:4'},
  {t:0,name:'瑪莉有隻小綿羊',tempo:96,s:'E4 D4 C4 D4 | E4 E4 E4:2 | D4 D4 D4:2 | E4 G4 G4:2 | E4 D4 C4 D4 | E4 E4 E4 E4 | D4 D4 E4 D4 | C4:4'},
  {t:0,name:'熱十字包',tempo:90,s:'E4 D4 C4:2 | E4 D4 C4:2 | C4:0.5 C4:0.5 C4:0.5 C4:0.5 D4:0.5 D4:0.5 D4:0.5 D4:0.5 | E4 D4 C4:2'},
- {t:1,name:'小星星',tempo:90,s:'C4 C4 G4 G4 | A4 A4 G4:2 | F4 F4 E4 E4 | D4 D4 C4:2 | G4 G4 F4 F4 | E4 E4 D4:2 | G4 G4 F4 F4 | E4 E4 D4:2 | C4 C4 G4 G4 | A4 A4 G4:2 | F4 F4 E4 E4 | D4 D4 C4:2'},
- {t:1,name:'倫敦鐵橋',tempo:96,s:'G4:1.5 A4:0.5 G4 F4 | E4 F4 G4:2 | D4 E4 F4:2 | E4 F4 G4:2 | G4:1.5 A4:0.5 G4 F4 | E4 F4 G4:2 | D4:2 G4 E4 | C4:4'},
- {t:1,name:'王老先生有塊地',tempo:100,s:'G4 G4 G4 D4 | E4 E4 D4:2 | B4 B4 A4 A4 | G4:4 | D4 G4 G4 G4 | D4 E4 E4 D4 | B4 B4 A4 A4 | G4:4'},
  {t:1,name:'歡樂頌',tempo:96,s:'E4 E4 F4 G4 | G4 F4 E4 D4 | C4 C4 D4 E4 | E4:1.5 D4:0.5 D4:2 | E4 E4 F4 G4 | G4 F4 E4 D4 | C4 C4 D4 E4 | D4:1.5 C4:0.5 C4:2'},
  {t:1,name:'念故鄉',tempo:80,s:'E4:1.5 G4:0.5 G4:2 | E4:1.5 D4:0.5 C4:2 | D4 E4 G4 E4 | D4:4 | E4:1.5 G4:0.5 G4:2 | E4:1.5 D4:0.5 C4:2 | D4 E4 D4:1.5 C4:0.5 | C4:4'},
- {t:1,name:'划船歌',tempo:90,meter:3,s:'C4:1.5 C4:1.5 | C4 D4:0.5 E4:1.5 | E4 D4:0.5 E4 F4:0.5 | G4:3 | C5:0.5 C5:0.5 C5:0.5 G4:0.5 G4:0.5 G4:0.5 | E4:0.5 E4:0.5 E4:0.5 C4:0.5 C4:0.5 C4:0.5 | G4 F4:0.5 E4 D4:0.5 | C4:3'},
- {t:2,name:'聖誕鈴聲',tempo:100,s:'E4 E4 E4:2 | E4 E4 E4:2 | E4 G4 C4:1.5 D4:0.5 | E4:4 | F4 F4 F4:1.5 F4:0.5 | F4 E4 E4 E4:0.5 E4:0.5 | E4 D4 D4 E4 | D4:2 G4:2'},
- {t:2,name:'普世歡騰',tempo:90,s:'C5:2 B4:1.5 A4:0.5 | G4:3 F4 | E4:2 D4:2 | C4:3 G4 | A4:3 A4 | B4:3 B4 | C5:4'},
- {t:2,name:'茉莉花',tempo:76,s:'E4 E4:0.5 G4:0.5 A4:0.5 C5:0.5 C5:0.5 A4:0.5 | G4 G4:0.5 A4:0.5 G4:2 | E4 E4:0.5 G4:0.5 A4:0.5 C5:0.5 C5:0.5 A4:0.5 | G4 G4:0.5 A4:0.5 G4:2 | G4 G4 G4 E4:0.5 G4:0.5 | A4 A4 G4:2 | E4 D4:0.5 E4:0.5 G4 E4:0.5 D4:0.5 | C4 C4:0.5 D4:0.5 C4:2'},
- {t:2,name:'噢！蘇珊娜',tempo:100,s:'r r r C4:0.5 D4:0.5 | E4 G4 G4:1.5 A4:0.5 | G4 E4 C4:1.5 D4:0.5 | E4 E4 D4 C4 | D4:3 C4:0.5 D4:0.5 | E4 G4 G4:1.5 A4:0.5 | G4 E4 C4:1.5 D4:0.5 | E4 E4 D4 D4 | C4:4'},
+ {t:1,name:'聖誕鈴聲',tempo:100,s:'E4 E4 E4:2 | E4 E4 E4:2 | E4 G4 C4:1.5 D4:0.5 | E4:4 | F4 F4 F4:1.5 F4:0.5 | F4 E4 E4 E4:0.5 E4:0.5 | E4 D4 D4 E4 | D4:2 G4:2'},
+ {t:1,name:'聖者進行曲',tempo:110,s:'r C4 E4 F4 | G4:4 | r C4 E4 F4 | G4:4 | r C4 E4 F4 | G4:2 E4:2 | C4:2 E4:2 | D4:4 | r E4 E4 D4 | C4:3 C4 | E4:2 G4:2 | G4 F4:3 | r E4 F4 G4 | E4:2 C4:2 | D4:2 D4:2 | C4:4'},
+ {t:2,name:'小鴨子',tempo:96,s:'C4 D4 E4 F4 | G4:2 G4:2 | A4 A4 A4 A4 | G4:4 | A4 A4 A4 A4 | G4:4 | F4 F4 F4 F4 | E4:2 E4:2 | D4 D4 D4 D4 | C4:4'},
+ {t:2,name:'小星星',tempo:90,s:'C4 C4 G4 G4 | A4 A4 G4:2 | F4 F4 E4 E4 | D4 D4 C4:2 | G4 G4 F4 F4 | E4 E4 D4:2 | G4 G4 F4 F4 | E4 E4 D4:2 | C4 C4 G4 G4 | A4 A4 G4:2 | F4 F4 E4 E4 | D4 D4 C4:2'},
+ {t:2,name:'王老先生有塊地',tempo:100,s:'G4 G4 G4 D4 | E4 E4 D4:2 | B4 B4 A4 A4 | G4:4 | D4 G4 G4 G4 | D4 E4 E4 D4 | B4 B4 A4 A4 | G4:4'},
+ {t:2,name:'倫敦鐵橋',tempo:96,s:'G4:1.5 A4:0.5 G4 F4 | E4 F4 G4:2 | D4 E4 F4:2 | E4 F4 G4:2 | G4:1.5 A4:0.5 G4 F4 | E4 F4 G4:2 | D4:2 G4 E4 | C4:4'},
+ {t:2,name:'划船歌',tempo:90,meter:3,s:'C4:1.5 C4:1.5 | C4 D4:0.5 E4:1.5 | E4 D4:0.5 E4 F4:0.5 | G4:3 | C5:0.5 C5:0.5 C5:0.5 G4:0.5 G4:0.5 G4:0.5 | E4:0.5 E4:0.5 E4:0.5 C4:0.5 C4:0.5 C4:0.5 | G4 F4:0.5 E4 D4:0.5 | C4:3'},
  {t:2,name:'康城賽馬',tempo:100,s:'G4:0.5 G4:0.5 E4:0.5 G4:0.5 A4:0.5 G4:0.5 E4 | E4:0.5 D4:1.5 E4:0.5 D4:1.5 | G4:0.5 G4:0.5 E4:0.5 G4:0.5 A4:0.5 G4:0.5 E4 | D4 E4:0.5 D4:0.5 C4:2'},
- {t:2,name:'聖者進行曲',tempo:110,s:'r C4 E4 F4 | G4:4 | r C4 E4 F4 | G4:4 | r C4 E4 F4 | G4:2 E4:2 | C4:2 E4:2 | D4:4 | r E4 E4 D4 | C4:3 C4 | E4:2 G4:2 | G4 F4:3 | r E4 F4 G4 | E4:2 C4:2 | D4:2 D4:2 | C4:4'}];
+ {t:2,name:'噢！蘇珊娜',tempo:100,s:'r r r C4:0.5 D4:0.5 | E4 G4 G4:1.5 A4:0.5 | G4 E4 C4:1.5 D4:0.5 | E4 E4 D4 C4 | D4:3 C4:0.5 D4:0.5 | E4 G4 G4:1.5 A4:0.5 | G4 E4 C4:1.5 D4:0.5 | E4 E4 D4 D4 | C4:4'},
+ {t:2,name:'茉莉花',tempo:76,s:'E4 E4:0.5 G4:0.5 A4:0.5 C5:0.5 C5:0.5 A4:0.5 | G4 G4:0.5 A4:0.5 G4:2 | E4 E4:0.5 G4:0.5 A4:0.5 C5:0.5 C5:0.5 A4:0.5 | G4 G4:0.5 A4:0.5 G4:2 | G4 G4 G4 E4:0.5 G4:0.5 | A4 A4 G4:2 | E4 D4:0.5 E4:0.5 G4 E4:0.5 D4:0.5 | C4 C4:0.5 D4:0.5 C4:2'},
+ {t:2,name:'普世歡騰',tempo:90,s:'C5:2 B4:1.5 A4:0.5 | G4:3 F4 | E4:2 D4:2 | C4:3 G4 | A4:3 A4 | B4:3 B4 | C5:4'}];
 const SG=n=>SONGS.find(x=>x.name===n).s;
 const GSONGS=[
  {t:0,name:'雙手輪流',tempo:84,R:'C4 D4 E4:2 | r:4 | E4 D4 C4:2 | r:4 | G4 F4 E4:2 | r:4 | E4 D4 C4:2 | r:4',L:'r:4 | C4 B3 A3:2 | r:4 | A3 B3 C4:2 | r:4 | F3 G3 A3:2 | r:4 | G3 B3 C4:2'},
- {t:0,name:'兩隻老虎',tempo:96,R:'C4 D4 E4 C4 | C4 D4 E4 C4 | E4 F4 G4:2 | E4 F4 G4:2 | G4:0.5 A4:0.5 G4:0.5 F4:0.5 E4 C4 | G4:0.5 A4:0.5 G4:0.5 F4:0.5 E4 C4 | C4 r C4:2 | C4 r C4:2',L:'r:4 | r:4 | r:4 | r:4 | r:4 | r:4 | r G3 r:2 | r G3 r:2'},
+ {t:0,name:'月光下（雙手）',tempo:84,R:SG('月光下'),L:'C3:4 | C3:2 G3:2 | C3:2 G3:2 | C3:4 | C3:4 | C3:2 G3:2 | C3:2 G3:2 | C3:4'},
  {t:1,name:'洋基歌',tempo:100,split:'C4 C4 D4 E4 | C4 E4 D4 G3 | C4 C4 D4 E4 | C4:2 B3:2 | C4 C4 D4 E4 | F4 E4 D4 C4 | B3 G3 A3 B3 | C4:2 C4:2'},
  {t:1,name:'生日快樂',tempo:90,meter:3,split:'r r G3:0.5 G3:0.5 | A3 G3 C4 | B3:2 G3:0.5 G3:0.5 | A3 G3 D4 | C4:2 G3:0.5 G3:0.5 | G4 E4 C4 | B3 A3 F4:0.5 F4:0.5 | E4 C4 D4 | C4:3'},
- {t:1,name:'月光下（雙手）',tempo:84,R:SG('月光下'),L:'C3:4 | C3:2 G3:2 | C3:2 G3:2 | C3:4 | C3:4 | C3:2 G3:2 | C3:2 G3:2 | C3:4'},
- {t:1,name:'小星星（雙手）',tempo:84,R:SG('小星星'),L:'C3:4 | F3:2 C3:2 | F3:2 C3:2 | G3:2 C3:2 | C3:2 F3:2 | C3:2 G3:2 | C3:2 F3:2 | C3:2 G3:2 | C3:4 | F3:2 C3:2 | F3:2 C3:2 | G3:2 C3:2'},
- {t:2,name:'祝你聖誕快樂',tempo:100,meter:3,split:'r r G3 | C4 C4:0.5 D4:0.5 C4:0.5 B3:0.5 | A3 A3 A3 | D4 D4:0.5 E4:0.5 D4:0.5 C4:0.5 | B3 G3 G3 | E4 E4:0.5 F4:0.5 E4:0.5 D4:0.5 | C4 A3 G3:0.5 G3:0.5 | A3 D4 B3 | C4:3'},
- {t:2,name:'歡樂頌（雙手）',tempo:90,R:SG('歡樂頌'),L:'C3:4 | C3:2 G3:2 | C3:2 E3:2 | G3:4 | C3:4 | C3:2 G3:2 | C3:2 E3:2 | G3:2 C3:2'},
- {t:2,name:'聖誕鈴聲（雙手）',tempo:96,R:SG('聖誕鈴聲'),L:'C3:4 | C3:4 | C3:2 G3:2 | C3:4 | F3:4 | C3:4 | G3:4 | G3:4'}];
+ {t:1,name:'祝你聖誕快樂',tempo:100,meter:3,split:'r r G3 | C4 C4:0.5 D4:0.5 C4:0.5 B3:0.5 | A3 A3 A3 | D4 D4:0.5 E4:0.5 D4:0.5 C4:0.5 | B3 G3 G3 | E4 E4:0.5 F4:0.5 E4:0.5 D4:0.5 | C4 A3 G3:0.5 G3:0.5 | A3 D4 B3 | C4:3'},
+ {t:1,name:'歡樂頌（雙手）',tempo:90,R:SG('歡樂頌'),L:'C3:4 | C3:2 G3:2 | C3:2 E3:2 | G3:4 | C3:4 | C3:2 G3:2 | C3:2 E3:2 | G3:2 C3:2'},
+ {t:1,name:'聖誕鈴聲（雙手）',tempo:96,R:SG('聖誕鈴聲'),L:'C3:4 | C3:4 | C3:2 G3:2 | C3:4 | F3:4 | C3:4 | G3:4 | G3:4'},
+ {t:2,name:'兩隻老虎',tempo:96,R:'C4 D4 E4 C4 | C4 D4 E4 C4 | E4 F4 G4:2 | E4 F4 G4:2 | G4:0.5 A4:0.5 G4:0.5 F4:0.5 E4 C4 | G4:0.5 A4:0.5 G4:0.5 F4:0.5 E4 C4 | C4 r C4:2 | C4 r C4:2',L:'r:4 | r:4 | r:4 | r:4 | r:4 | r:4 | r G3 r:2 | r G3 r:2'},
+ {t:2,name:'小星星（雙手）',tempo:84,R:SG('小星星'),L:'C3:4 | F3:2 C3:2 | F3:2 C3:2 | G3:2 C3:2 | C3:2 F3:2 | C3:2 G3:2 | C3:2 F3:2 | C3:2 G3:2 | C3:4 | F3:2 C3:2 | F3:2 C3:2 | G3:2 C3:2'}];
 GSONGS.forEach(g=>g.grand=true);
 const TIERS=['入門','初級','進階'];
 GSONGS.forEach(g=>g.grand=true);
