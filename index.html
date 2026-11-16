@@ -318,6 +318,7 @@ body{background:radial-gradient(circle at 15% 10%,#fff3dc 0,transparent 40%),rad
   <div class="big">節奏要出現哪些拍子？</div>
   <div style="font-size:16px;color:#a07f56;margin-bottom:8px" id="rsWho"></div>
   <div class="row" id="rsList" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:560px"></div>
+  <div class="tier" style="text-align:center">附點的位置</div><div id="rsEasy" style="display:flex;flex-wrap:wrap;gap:8px;justify-content:center;max-width:560px"></div>
   <div class="note">至少選一種音符。每次按「換一個」都會用這些拍子重新出題。</div>
   <button class="btn" id="rsOk">好了</button>
 </div>
@@ -685,12 +686,15 @@ const RPAT=[[[1,1,1,1],[2,1,1],[1,1,2],[2,2],[4],[1,1,1,1]],
  [[1,'r',1,1],[2,'r',1],[1,1,'r',1],[1,1,2],['r',1,1,1],[1,1,1,'r']],
  [[.5,.5,1,1,1],[1,.5,.5,1,1],[.5,.5,.5,.5,2],[1,1,.5,.5,1],[1,'r',.5,.5,1],[.5,.5,1,'r',1]],
  [[1.5,.5,1,1],[1,1.5,.5,1],[1.5,.5,2],[3,1],[2,1.5,.5],[1,1,1.5,.5],[3,'r']]];
-const RUNITS=[['q','四分音符',[1]],['h','二分音符',[2]],['w','全音符',[4]],['r','四分休止符',['r']],['e','兩個八分音符',[.5,.5]],['dq','附點四分＋八分',[1.5,.5]],['dh','附點二分音符',[3]]];
+const RUNITS=[['q','四分音符',[1]],['h','二分音符',[2]],['w','全音符',[4]],['r','四分休止符',['r']],['e','兩個八分音符',[.5,.5]],['dq','附點四分＋八分',[1.5,.5]],['dqr','附點四分＋八分休止符',[1.5,'r8']],['dh','附點二分音符',[3]]];
 function rhySet(){return (CUR&&CUR.prog&&CUR.prog.rhySet)||['q','h'];}
-function genCustom(){const set=rhySet();const units=RUNITS.filter(u=>set.includes(u[0])).map(u=>u[2]);const len=u=>u.reduce((a,d)=>a+(d==='r'?1:d),0);const notes=[];
-  for(let bar=0;bar<4;bar++){let ok=false;for(let tries=0;tries<80&&!ok;tries++){let rem=4,seq=[];while(rem>0){const fit=units.filter(u=>len(u)<=rem);if(!fit.length)break;const u=pick(fit);seq.push(...u);rem-=len(u);}if(rem===0){ok=true;seq.forEach(d=>notes.push(d==='r'?{rest:true,dur:1}:{d:13,dur:d}));}}
-    if(!ok)[1,1,1,1].forEach(d=>notes.push({d:13,dur:d}));}
-  return finalize({name:'老師自訂節奏',tempo:80,notes,rhythm:true});}
+function genCustom(){const set=rhySet();const easy=!(CUR&&CUR.prog&&CUR.prog.rhyEasy===false);const units=RUNITS.filter(u=>set.includes(u[0])).map(u=>u[2]);
+  const dl=d=>d==='r'?1:d==='r8'?.5:d;const len=u=>u.reduce((a,d)=>a+dl(d),0);const isDot=u=>u.includes(1.5);const notes=[];let prevDot=false;
+  for(let bar=0;bar<4;bar++){let ok=false;for(let tries=0;tries<120&&!ok;tries++){let rem=4,pos=0,seq=[],pd=prevDot;
+      while(rem>0){const fit=units.filter(u=>len(u)<=rem&&(!easy||!isDot(u)||((pos===0||pos===2)&&!pd)));if(!fit.length)break;const u=pick(fit);seq.push(...u);rem-=len(u);pos+=len(u);pd=isDot(u);}
+      if(rem===0){ok=true;prevDot=pd;seq.forEach(d=>notes.push(d==='r'?{rest:true,dur:1}:d==='r8'?{rest:true,dur:.5}:{d:13,dur:d}));}}
+    if(!ok){[1,1,1,1].forEach(d=>notes.push({d:13,dur:d}));prevDot=false;}}
+return finalize({name:'老師自訂節奏',tempo:80,notes,rhythm:true});}
 function genRhythm(){if(S.rlv==='c')return genCustom();const lv=S.rlv||0;const notes=[];for(let bar=0;bar<4;bar++){let pool=[...RPAT[0]];for(let k=1;k<=lv;k++)pool=pool.concat(RPAT[k],RPAT[k]);
   pick(pool).forEach(d=>notes.push(d==='r'?{rest:true,dur:1}:{d:13,dur:d}));}
   return finalize({name:'節奏',tempo:80,notes,rhythm:true});}
@@ -711,7 +715,8 @@ function renderSong(){
   // beams: pair of eighths starting on a beat, same staff
   const beamOf={};so.notes.forEach((nt,i)=>{if(nt.rest||nt.dur!==.5||nt.beat%1!==0)return;const j=so.notes.findIndex((m,k)=>k>i&&!m.rest&&m.dur===.5&&m.beat===nt.beat+.5&&m.staff===nt.staff);if(j>0){beamOf[i]={pair:j,first:true};beamOf[j]={pair:i,first:false};}});
   so.notes.forEach((nt,i)=>{const x=xb(nt.beat);let g;
-    if(nt.rest){if(grand){G.ng.push(null);return;}g=el('g',{style:'--c:#4a3b2a'},scroll);el('path',{class:'nf',d:`M${x-4} 76l9 11-6 8 8 11c-6-3-11-1-8 6-8-6-6-12 0-11l-9-11 7-7-4-5z`},g);}
+    if(nt.rest&&nt.dur===.5&&!grand){g=el('g',{style:'--c:#4a3b2a'},scroll);el('circle',{class:'nf',cx:x-3,cy:88,r:4.5},g);el('path',{class:'ns',d:`M${x-3} 91q6 0 9-5l-8 26`,'stroke-width':3,fill:'none','stroke-linecap':'round'},g);}
+    else if(nt.rest){if(grand){G.ng.push(null);return;}g=el('g',{style:'--c:#4a3b2a'},scroll);el('path',{class:'nf',d:`M${x-4} 76l9 11-6 8 8 11c-6-3-11-1-8 6-8-6-6-12 0-11l-9-11 7-7-4-5z`},g);}
     else{const ly=so.rhythm?100:localY(nt.d,nt.staff),oy=so.rhythm?0:staffOff(nt.staff);const o={rhythm:so.rhythm};const bm=beamOf[i];
       if(bm){const a=bm.first?nt:so.notes[bm.pair],b=bm.first?so.notes[bm.pair]:nt;const la=so.rhythm?100:localY(a.d,a.staff),lb=so.rhythm?100:localY(b.d,b.staff);
         const up=so.rhythm||(la+lb)/2>100;o.up=up;o.noFlag=true;
@@ -961,7 +966,7 @@ $('endNext').onclick=()=>showPicker();
 $('endAlbum').onclick=()=>{$('ended').classList.add('hide');openBook();};
 $('endMore').onclick=()=>askPin(()=>{G.sess.left=120;$('ended').classList.add('hide');tick();});
 $('studBtn').onclick=()=>{if(CUR)openBook();};
-$('rsOk').onclick=()=>{const sel=[...$('rsList').querySelectorAll('.chip.on')].map(b=>b.dataset.u);if(!sel.some(u=>u!=='r'))return toast('至少要選一種音符（不能只有休止符）');if(CUR){CUR.prog=CUR.prog||{};CUR.prog.rhySet=sel;saveDB();}$('rhySetOv').classList.add('hide');S.rlv='c';G.rhy=null;save();enterMode('rhythm');};
+$('rsOk').onclick=()=>{const sel=[...$('rsList').querySelectorAll('.chip.on')].map(b=>b.dataset.u);if(!sel.some(u=>u!=='r'))return toast('至少要選一種音符（不能只有休止符）');if(CUR){CUR.prog=CUR.prog||{};CUR.prog.rhySet=sel;const e=$('rsEasy').querySelector('.chip.on');CUR.prog.rhyEasy=!e||e.dataset.v==='1';saveDB();}$('rhySetOv').classList.add('hide');S.rlv='c';G.rhy=null;save();enterMode('rhythm');};
 $('svBox').onclick=()=>{const b=$('svBox');const cl=b.className;b.className='svbox';void b.offsetWidth;b.className=cl+' boost';playStk(catOf(STK.findIndex(x=>x[0]===$('svName').textContent)));};
 $('svClose').onclick=()=>$('stkView').classList.add('hide');
 $('bPrev').onclick=()=>{if(bookPage>0){bookPage--;drawBook(-1);}};$('bNext').onclick=()=>{bookPage++;drawBook(1);};
@@ -1066,7 +1071,9 @@ function drawBook(anim){const own={};(CUR.stickers||[]).forEach(x=>own[x.i]=(own
   $('bPrev').disabled=bookPage===0;$('bNext').disabled=bookPage>=pages-1;$('bookPageNo').textContent=`${bookPage+1} / ${pages}`;}
 function stickerBook(st){const L=st.stickers||[];return `<div class="tier">我的貼紙（${L.length} 張）</div>`+(L.length?`<div class="book">`+L.map(x=>`<div class="bk" title="${x.song}">${stickerSvg(x.i)}<span>${x.song}</span></div>`).join('')+'</div>':'<div class="note" style="margin:0">曲子拿到三顆星，就能選一張貼紙！</div>');}
 function showRhySet(){const set=rhySet();$('rsList').innerHTML=RUNITS.map(u=>`<button class="chip ${set.includes(u[0])?'on':''}" data-u="${u[0]}">${u[1]}</button>`).join('');
-  $('rsList').querySelectorAll('.chip').forEach(b=>b.onclick=()=>b.classList.toggle('on'));$('rsWho').textContent=CUR?`幫 ${CUR.name} 選要練習的拍子（會記住）`:'';$('rhySetOv').classList.remove('hide');}
+  $('rsList').querySelectorAll('.chip').forEach(b=>b.onclick=()=>b.classList.toggle('on'));
+  const easy=!(CUR&&CUR.prog&&CUR.prog.rhyEasy===false);$('rsEasy').innerHTML=`<button class="chip ${easy?'on':''}" data-v="1">附點只放在第1～2拍或第3～4拍，而且不連續（建議）</button><button class="chip ${easy?'':'on'}" data-v="0">附點自由出現</button>`;
+  $('rsEasy').querySelectorAll('.chip').forEach(b=>b.onclick=()=>{$('rsEasy').querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',c===b));});$('rsWho').textContent=CUR?`幫 ${CUR.name} 選要練習的拍子（會記住）`:'';$('rhySetOv').classList.remove('hide');}
 $('rsOk')&&0;
 /* PIN */
 let pinCb=null,pinBuf='';
