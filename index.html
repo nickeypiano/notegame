@@ -91,6 +91,34 @@ body{background:radial-gradient(circle at 15% 10%,#fff3dc 0,transparent 40%),rad
 #staff .nf{fill:var(--c)}#staff .ns{stroke:var(--c)}
 @media (max-height:540px){.head{flex-direction:row;flex-wrap:wrap;justify-content:center;align-items:center;gap:4px 8px}.head .sub{margin-top:0}.stage{margin-top:4px}.card{padding:2px 6px}.cardtop{min-height:22px}.info{font-size:13px}.info svg{width:15px;height:15px}.beats i{width:10px;height:10px}.mascot{width:90px}#bird{width:72px;height:72px}.bubble{font-size:14px}.piano{height:36vh;min-height:120px}.tab{padding:5px 11px;font-size:14px}.icon{width:34px;height:34px}.chip{padding:2px 10px;font-size:13px}.sub{margin-top:4px;min-height:28px}.name{font-size:20px}.cardbot{min-height:30px}}
 @media (max-width:560px){.mascot{width:78px}#bird{width:70px;height:70px}.bubble{font-size:13px;padding:5px 6px}.tab{padding:6px 10px;font-size:14px}}
+
+.stud{border:none;background:#fff;border-radius:999px;height:40px;padding:0 10px 0 4px;display:flex;align-items:center;gap:5px;box-shadow:0 2px 0 #ead6b6;font-family:inherit;font-size:15px;font-weight:800;color:#6b5a45;cursor:pointer}
+.stud svg{width:18px;height:18px}.stud .av{width:32px;height:32px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:15px}
+.stud .clock{background:#fdf0dc;border-radius:999px;padding:2px 7px;font-size:13px;color:#b0703a}
+.stud .clock.low{background:#e5626a;color:#fff}
+.pgrid{display:flex;flex-wrap:wrap;gap:14px;justify-content:center;max-width:720px;margin:10px 0 16px}
+.pbtn{border:none;background:#fff;border-radius:22px;padding:12px 16px 10px;width:130px;box-shadow:0 4px 0 #ecd8b6;font-family:inherit;cursor:pointer;display:flex;flex-direction:column;align-items:center;gap:6px}
+.pbtn .av{width:64px;height:64px;border-radius:50%;display:flex;align-items:center;justify-content:center;color:#fff;font-size:28px;font-weight:900}
+.pbtn b{font-size:19px;color:#4a3b2a}.pbtn span{font-size:14px;color:#a07f56;display:flex;align-items:center;gap:3px}
+.pbtn span svg{width:15px;height:15px}
+.sgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:10px;max-width:520px;width:100%}
+.sticker{background:#fff;border-radius:18px;padding:8px 4px 6px;box-shadow:0 3px 0 #ecd8b6;display:flex;flex-direction:column;align-items:center;font-size:13px;font-weight:800;color:#6b5a45}
+.sticker svg{width:100%;max-width:80px;aspect-ratio:1}
+.sticker.lock svg{filter:grayscale(1);opacity:.2}.sticker.lock{color:#b8a68c;font-weight:600}
+.prog{max-width:520px;width:100%;text-align:left;font-size:14px;margin-top:10px;line-height:1.9}
+.pc{display:inline-block;background:#fff;border-radius:999px;padding:0 10px;margin:2px;box-shadow:0 1px 0 #ecd8b6}
+.pc.done{background:#d4f5df;color:#1f7a4a}
+.endstars{display:flex;flex-wrap:wrap;justify-content:center;gap:2px;max-width:480px;margin:10px 0}.endstars svg{width:30px;height:30px}
+.pindots{display:flex;gap:14px;margin:8px 0 14px}.pindots i{width:18px;height:18px;border-radius:50%;border:3px solid #c9a97a}.pindots i.on{background:#c9a97a}
+.pad{display:grid;grid-template-columns:repeat(3,72px);gap:10px}
+.pad button{height:62px;border:none;border-radius:16px;background:#fff;font-size:26px;font-weight:800;box-shadow:0 3px 0 #ecd8b6;font-family:inherit;color:#4a3b2a}
+.set input,.set textarea{font-family:inherit;font-size:16px;border:2px solid #f0dcbc;border-radius:12px;padding:6px 10px;flex:1;min-width:0;width:100%}
+.set textarea{margin:6px 0;font-size:12px}
+.trow{border-top:1px solid #f3e6d1;padding:8px 0;display:flex;flex-wrap:wrap;align-items:center;gap:6px}
+.trow .av{width:30px;height:30px;border-radius:50%;color:#fff;display:flex;align-items:center;justify-content:center;font-weight:900}
+.trow .nm{font-weight:900;font-size:17px;min-width:60px}.trow .st{font-size:13px;color:#8a7a66;flex:1;min-width:160px}
+.trow .chip{font-size:13px;padding:2px 9px}.trow .det{width:100%;font-size:12.5px;color:#8a7a66;line-height:1.7}
+@media (max-height:540px){.stud{height:34px}.stud .av{width:26px;height:26px}}
 </style>
 </head>
 <body>
@@ -102,6 +130,7 @@ body{background:radial-gradient(circle at 15% 10%,#fff3dc 0,transparent 40%),rad
       <button class="tab" data-m="perform">跟著拍子演奏</button>
       <button class="tab" data-m="rhythm">節奏拍拍</button>
     </div>
+    <button class="stud" id="studBtn"><span class="av" id="studAv"></span><span id="studName"></span><svg viewBox="0 0 24 24"><path d="M12 1.8l3.1 6.4 7 1-5.1 4.9 1.2 7L12 17.8 5.8 21.1 7 14.1 1.9 9.2l7-1z" fill="#ffc53d" stroke="#e8a317" stroke-width="1.4"/></svg><b id="studStars">0</b><span class="clock" id="clock"></span></button>
     <button class="icon" id="micBtn" title="聽真的鋼琴"><svg viewBox="0 0 24 24" fill="none" stroke="#6b5a45" stroke-width="2" stroke-linecap="round"><rect x="9" y="3" width="6" height="11" rx="3"/><path d="M5 11a7 7 0 0 0 14 0M12 18v3M9 21h6"/></svg></button>
     <button class="icon" id="kbdBtn" title="螢幕鍵盤"><svg viewBox="0 0 24 24" fill="none" stroke="#6b5a45" stroke-width="2" stroke-linejoin="round"><rect x="2.5" y="5" width="19" height="14" rx="2"/><path d="M8 5v14M14 5v14M6.5 5v7h3V5M12.5 5v7h3V5"/></svg></button>
     <button class="icon" id="gear" title="設定"><svg viewBox="0 0 24 24" fill="none" stroke="#6b5a45" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M12 2.5v3M12 18.5v3M2.5 12h3M18.5 12h3M5.3 5.3l2.1 2.1M16.6 16.6l2.1 2.1M5.3 18.7l2.1-2.1M16.6 7.4l2.1-2.1"/></svg></button>
@@ -167,8 +196,61 @@ body{background:radial-gradient(circle at 15% 10%,#fff3dc 0,transparent 40%),rad
   <div class="note">上方麥克風按鈕會聽真的鋼琴（任何八度都可以）。用麥克風時遊戲會暫停自己的聲音，避免聽錯。電腦鍵盤 A S D F G H J K 也能彈；Chrome 可接 MIDI 電子琴。</div>
 </div>
 <div class="toast" id="toast"></div>
+<div class="overlay hide" id="picker">
+  <div class="big">今天是誰要玩？</div>
+  <div class="pgrid" id="pgrid"></div>
+  <button class="btn sec" id="pickTeacher">老師：管理學生</button>
+</div>
+<div class="overlay hide" id="album">
+  <div class="big" id="albumTitle">我的貼紙簿</div>
+  <div style="font-size:17px;margin-bottom:6px" id="albumSub"></div>
+  <div class="sgrid" id="sgrid"></div>
+  <div class="prog" id="albumProg"></div>
+  <button class="btn" id="albumClose">回去玩</button>
+</div>
+<div class="overlay hide" id="ended">
+  <svg viewBox="0 0 120 120" width="110" height="110" id="endBird"></svg>
+  <div class="big">今天的遊戲時間到囉！</div>
+  <div style="font-size:20px" id="endSub"></div>
+  <div class="endstars" id="endStars"></div>
+  <div id="endSticker"></div>
+  <div><button class="btn" id="endAlbum">看我的貼紙簿</button><button class="btn sec" id="endNext">換下一位</button></div>
+  <button class="chip" id="endMore" style="margin-top:8px">老師：再玩 2 分鐘</button>
+</div>
+<div class="overlay hide" id="newSticker" style="z-index:15">
+  <div class="big">得到新貼紙！</div>
+  <div id="nsBox" style="width:160px;height:160px"></div>
+  <div style="font-size:22px;font-weight:800;margin:6px 0" id="nsName"></div>
+  <button class="btn" id="nsOk">好耶！</button>
+</div>
+<div class="overlay hide" id="pin" style="z-index:25">
+  <div class="big">老師密碼</div>
+  <div class="pindots" id="pindots"><i></i><i></i><i></i><i></i></div>
+  <div class="pad" id="pad"></div>
+  <button class="chip" id="pinCancel" style="margin-top:10px">取消</button>
+  <div class="note">預設密碼 0000，可在「學生管理」裡修改。</div>
+</div>
+<div class="overlay hide" id="teacher">
+  <div class="big">學生管理</div>
+  <div class="set">
+    <div class="t">新增學生</div>
+    <div class="row"><input id="newName" placeholder="學生名字" maxlength="8"><button class="chip go" id="addStud">新增</button></div>
+    <div class="t">學生進度</div>
+    <div id="tlist"></div>
+    <div class="t">每堂課可以玩</div>
+    <div class="row" id="minRow"><button class="chip" data-v="3">3 分鐘</button><button class="chip" data-v="5">5 分鐘</button><button class="chip" data-v="10">10 分鐘</button><button class="chip" data-v="0">不限時</button></div>
+    <div class="t">修改老師密碼（4 位數字）</div>
+    <div class="row"><input id="newPin" inputmode="numeric" maxlength="4" placeholder="新密碼"><button class="chip" id="savePin">儲存</button></div>
+    <div class="t">備份／換裝置</div>
+    <div class="note" style="margin-top:0">進度只存在這台裝置的瀏覽器裡。換裝置前，先按「複製備份」，貼到新裝置的框框裡再按「匯入」。</div>
+    <textarea id="backup" rows="3" placeholder="把備份文字貼在這裡"></textarea>
+    <div class="row"><button class="chip" id="copyBk">複製備份</button><button class="chip" id="importBk">匯入</button></div>
+  </div>
+  <button class="btn" id="teacherClose">完成</button>
+</div>
 
 <script>
+const FCLEF="M15.193 79.414C8.145 79.414,5 84.552,5 88.428C5 91.657,6.685 94.437,9.97 94.437C12.525 94.437,14.266 92.668,14.266 90.168C14.266 87.585,12.357 85.956,10.391 85.956C9.296 85.956,8.875 86.237,8.37 86.237C7.836 86.237,7.696 85.928,7.696 85.507C7.696 83.907,10.139 80.93,14.266 80.93C18.535 80.93,20.416 85.142,20.416 91.488C20.416 102.776,14.828 109.094,5.393 114.458C5.028 114.654,4.803 114.879,4.803 115.188C4.803 115.44,4.972 115.665,5.337 115.665C5.534 115.665,5.758 115.609,6.011 115.469C15.951 110.611,26.481 103.422,26.481 91.123C26.481 84.103,22.185 79.414,15.193 79.414M30.44 82.727C29.177 82.727,28.222 83.682,28.222 84.946C28.222 86.209,29.177 87.164,30.44 87.164C31.676 87.164,32.659 86.209,32.659 84.946C32.659 83.682,31.676 82.727,30.44 82.727M30.469 92.864C29.233 92.864,28.278 93.791,28.278 95.054C28.278 96.318,29.233 97.245,30.469 97.245C31.732 97.245,32.659 96.318,32.659 95.054C32.659 93.791,31.732 92.864,30.469 92.864";
 const CLEF="M20.191 93.208C20.135 92.731,20.191 92.703,20.444 92.45C24.824 88.378,28.138 83.24,28.138 77.034C28.138 73.524,27.155 70.042,25.498 67.627C24.881 66.729,23.842 65.606,23.392 65.606C22.831 65.606,21.567 66.644,20.781 67.543C17.776 70.856,16.794 75.911,16.794 80.123C16.794 82.454,17.102 85.093,17.383 86.75C17.468 87.227,17.496 87.311,17.018 87.733C11.178 92.534,5 98.319,5 106.49C5 113.51,9.802 120.193,19.714 120.193C20.641 120.193,21.708 120.109,22.522 119.94C22.943 119.856,23.027 119.828,23.112 120.305C23.589 123.029,24.207 126.539,24.207 128.449C24.207 134.43,20.163 135.16,17.776 135.16C15.586 135.16,14.547 134.514,14.547 133.98C14.547 133.7,14.912 133.587,15.839 133.278C17.102 132.913,18.535 131.846,18.535 129.488C18.535 127.269,17.131 125.36,14.66 125.36C11.964 125.36,10.335 127.522,10.335 130.021C10.335 132.632,11.908 136.62,18.029 136.62C20.725 136.62,25.976 135.384,25.976 128.533C25.976 126.202,25.246 122.383,24.824 119.856C24.74 119.379,24.768 119.435,25.33 119.182C29.43 117.554,32.125 114.128,32.125 109.551C32.125 104.384,28.334 99.807,22.382 99.807C21.343 99.807,21.343 99.807,21.202 99.077M24.01 71.867C25.33 71.867,26.425 72.962,26.425 75.181C26.425 79.674,22.578 83.324,19.405 86.104C19.124 86.357,18.956 86.3,18.872 85.767C18.703 84.728,18.619 83.352,18.619 82.06C18.619 75.742,21.539 71.867,24.01 71.867M19.602 99.414C19.714 100.172,19.714 100.144,18.984 100.369C15.446 101.576,13.115 104.777,13.115 108.231C13.115 111.853,15.025 114.437,17.776 115.391C18.113 115.504,18.591 115.616,18.872 115.616C19.18 115.616,19.349 115.419,19.349 115.167C19.349 114.886,19.04 114.774,18.759 114.661C17.046 113.931,15.839 112.19,15.839 110.337C15.839 108.006,17.411 106.293,19.882 105.591C20.528 105.423,20.612 105.479,20.697 105.928L22.718 117.975C22.803 118.424,22.747 118.424,22.157 118.536C21.511 118.649,20.697 118.733,19.882 118.733C12.806 118.733,8.229 114.802,8.229 109.186C8.229 106.799,8.65 103.598,11.992 99.807C14.435 97.111,16.288 95.595,18.17 94.079C18.591 93.742,18.675 93.798,18.759 94.219M22.382 105.844C22.297 105.339,22.353 105.226,22.831 105.283C26.116 105.563,28.812 108.315,28.812 111.853C28.812 114.409,27.267 116.458,25.021 117.61C24.544 117.834,24.459 117.834,24.375 117.357";
 const NOTES=[
  {id:'C4',solfa:'Do',abc:'C',midi:60,step:0,color:'#e5484d'},
@@ -220,21 +302,23 @@ function stopBus(){if(bus){try{bus.disconnect();}catch(e){}bus=null;}}
 /* ---------- drawing ---------- */
 const NS='http://www.w3.org/2000/svg';
 function el(t,a,p){const e=document.createElementNS(NS,t);for(const k in a)e.setAttribute(k,a[k]);if(p)p.appendChild(e);return e;}
-const yOf=s=>160-s*10;
+const yOf=s=>(S.clef==='bass'?110:160)-s*10;
+const off=()=>S.clef==='bass'?-12:0;
+const mid=n=>n.midi+off();
 const STAR='M12 1.8l3.1 6.4 7 1-5.1 4.9 1.2 7L12 17.8 5.8 21.1 7 14.1 1.9 9.2l7-1z';
 function starSvg(cls=''){return `<svg class="${cls}" viewBox="0 0 24 24"><path d="${STAR}" fill="#ffc53d" stroke="#e8a317" stroke-width="1.4" stroke-linejoin="round"/><path d="M8.5 9.5l1.5-.2" stroke="#fff" stroke-width="1.4" stroke-linecap="round" opacity=".8"/></svg>`;}
 function staffLines(p,x1,x2){for(let i=0;i<5;i++)el('line',{x1,x2,y1:60+i*20,y2:60+i*20,stroke:'#5b4a36','stroke-width':2},p);}
-function clef(p,x){el('path',{d:CLEF,fill:'#4a3b2a',transform:`translate(${x},-100) scale(2)`},p);}
+function clef(p,x){el('path',{d:S.clef==='bass'?FCLEF:CLEF,fill:'#4a3b2a',transform:`translate(${x},-100) scale(2)`},p);}
 function noteColor(n){return S.color?n.color:'#2b2117';}
 function drawNote(p,x,n,dur,color,rh){
-  const g=el('g',{style:`--c:${color}`},p);const s=n.step,y=yOf(s);if(rh)g.setAttribute('transform','translate(0,-20)');
-  if(s===0)el('line',{x1:x-24,x2:x+24,y1:160,y2:160,stroke:'#5b4a36','stroke-width':2},g);
-  const up=s<6;
+  const g=el('g',{style:`--c:${color}`},p);const s=n.step,y=rh?100:yOf(s);
+  if(!rh&&(y>=160||y<=40))el('line',{x1:x-24,x2:x+24,y1:y,y2:y,stroke:'#5b4a36','stroke-width':2},g);
+  const up=rh||y>100;
   if(dur<4){if(up)el('line',{class:'ns',x1:x+12.5,x2:x+12.5,y1:y-2,y2:y-68,'stroke-width':3},g);else el('line',{class:'ns',x1:x-12.5,x2:x-12.5,y1:y+2,y2:y+68,'stroke-width':3},g);}
   if(dur===.5){if(up)el('path',{class:'nf',d:`M${x+11} ${y-68}q3 14 15 21q7 6 1 20q2-13-16-18z`},g);else el('path',{class:'nf',d:`M${x-14} ${y+68}q3-14 15-21q7-6 1-20q2 13-16 18z`},g);}
   el('ellipse',{class:'nf',cx:x,cy:y,rx:14,ry:10,transform:`rotate(-20 ${x} ${y})`},g);
   if(dur>=2)el('ellipse',{cx:x,cy:y,rx:8.5,ry:4.3,fill:'#fff',transform:`rotate(-35 ${x} ${y})`},g);
-  if(dur===1.5||dur===3)el('circle',{class:'nf',cx:x+24,cy:y-(s%2===0?7:0),r:3.6},g);
+  if(dur===1.5||dur===3)el('circle',{class:'nf',cx:x+24,cy:y-(y%20===0?7:0),r:3.6},g);
   return g;
 }
 function addStar(p,x,y,size=28){const g=el('g',{transform:`translate(${x-size/2},${y-size/2}) scale(${size/24})`},p);el('path',{d:STAR,fill:'#ffc53d',stroke:'#e8a317','stroke-width':1.4,'stroke-linejoin':'round'},g);return g;}
@@ -246,8 +330,8 @@ function buildPiano(){piano.innerHTML='';
   BLACKS.forEach(b=>{const k=document.createElement('div');k.className='b';k.dataset.midi=b.midi;k.style.left=((b.after+1)/8*100)+'%';piano.appendChild(k);keyEls[b.midi]=k;});}
 function refreshKeys(){piano.classList.toggle('showColor',S.color);piano.classList.toggle('hide',!S.kbd);$('kbdBtn').classList.toggle('live',S.kbd);
   NOTES.forEach((n,i)=>{const k=keyEls[n.midi];k.querySelector('.lab').textContent=S.lab==='solfa'?n.solfa:S.lab==='abc'?n.abc:'';k.classList.toggle('off',S.mode==='read'&&!S.timed&&!LEVELS[S.lv].idx.includes(i));});}
-piano.addEventListener('pointerdown',e=>{const k=e.target.closest('.w,.b');if(!k)return;e.preventDefault();input(+k.dataset.midi,'kbd');});
-function flashKey(m,cls,ms=180){const k=keyEls[m];if(!k)return;if(cls==='bad'){k.classList.remove('bad');void k.offsetWidth;}k.classList.add(cls);if(ms)setTimeout(()=>k.classList.remove(cls),ms);}
+piano.addEventListener('pointerdown',e=>{const k=e.target.closest('.w,.b');if(!k)return;e.preventDefault();input(+k.dataset.midi+off(),'kbd');});
+function flashKey(m,cls,ms=180){m-=off();while(m<60)m+=12;while(m>72)m-=12;const k=keyEls[m];if(!k)return;if(cls==='bad'){k.classList.remove('bad');void k.offsetWidth;}k.classList.add(cls);if(ms)setTimeout(()=>k.classList.remove(cls),ms);}
 function clearKeys(){Object.values(keyEls).forEach(k=>k.classList.remove('ok','hint'));}
 
 /* ---------- feedback ---------- */
@@ -271,8 +355,8 @@ function beats(i){[...$('beats').children].forEach((d,k)=>d.classList.toggle('on
 function input(m,src){
   if(!$('start').classList.contains('hide')||!$('win').classList.contains('hide'))return;
   audio();
-  if(src==='kbd'||src==='key'){tone(m);flashKey(m,'down');}
-  else{let k=m;while(k<60)k+=12;while(k>72)k-=12;flashKey(k,'down',220);}
+  if(src==='kbd'||src==='key')tone(m);
+  flashKey(m,'down',220);
   const t=ac?ac.currentTime-(src==='mic'?.07:0):0;
   if(S.mode==='read')readInput(m,src);else if(S.mode==='practice')practiceInput(m,src);else performInput(m,src,t);
 }
@@ -280,12 +364,13 @@ const same=(m,target,src)=>src==='kbd'||src==='key'?m===target:((m-target)%12+12
 
 /* ---------- READ mode ---------- */
 function readSetup(){
-  $('sub').innerHTML=LEVELS.map((l,i)=>`<button class="chip ${i===S.lv&&!S.timed?'on':''}" data-lv="${i}">${l.name}</button>`).join('')+`<button class="chip ${S.timed?'on':''}" id="timedBtn">限時 60 秒</button>`;
+  $('sub').innerHTML=LEVELS.map((l,i)=>`<button class="chip ${i===S.lv&&!S.timed?'on':''}" data-lv="${i}">${l.name}</button>`).join('')+`<button class="chip ${S.timed?'on':''}" id="timedBtn">限時 60 秒</button><span class="sep"></span><button class="chip ${S.clef!=='bass'?'on':''}" data-clef="treble">高音譜</button><button class="chip ${S.clef==='bass'?'on':''}" data-clef="bass">低音譜</button>`;
+  bindClef();
   $('timedBtn').onclick=()=>{S.timed=true;save();enterMode('read');};
   $('sub').querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{S.lv=+b.dataset.lv;S.timed=false;save();enterMode('read');});
   $('beats').style.visibility='hidden';$('listenTxt').textContent='聽聽看';
   G.score=0;G.last=null;clearInterval(G.timer);
-  if(S.timed){G.left=60;G.timer=setInterval(()=>{G.left--;drawReadStars();if(G.left<=0){clearInterval(G.timer);G.target=null;let best=0;try{best=+localStorage.getItem('ng_best')||0;if(G.score>best)localStorage.setItem('ng_best',G.score);}catch(e){}
+  if(S.timed){G.left=60;G.timer=setInterval(()=>{G.left--;drawReadStars();if(G.left<=0){clearInterval(G.timer);G.target=null;markProg('timed_'+(S.clef||'treble'),G.score);let best=0;try{best=+localStorage.getItem('ng_best')||0;if(G.score>best)localStorage.setItem('ng_best',G.score);}catch(e){}
     win(G.score>=20?3:G.score>=12?2:1,`60 秒答對 ${G.score} 個！`,G.score>best?'新紀錄！':`最高紀錄：${best} 個`,{});}},1000);}
   drawReadStars();readNext();
 }
@@ -293,7 +378,7 @@ function drawReadStars(){if(S.timed){info(`剩下 <b style="color:#f4845f;font-s
 function readNext(){
   const pool=S.timed?LEVELS[2].idx:LEVELS[S.lv].idx;let i;do{i=pool[Math.floor(Math.random()*pool.length)];}while(pool.length>1&&i===G.last);
   G.last=i;G.target=NOTES[i];G.wrong=0;G.busy=false;clearKeys();$('name').textContent='';say('這是哪一個音？');
-  drawRead('new');if(S.autoSnd&&sfxOn())setTimeout(()=>tone(G.target.midi,0,1.2,.3),300);
+  drawRead('new');if(S.autoSnd&&sfxOn())setTimeout(()=>tone(mid(G.target),0,1.2,.3),300);
 }
 function drawRead(state){
   const svg=$('staff'),wrap=$('staffwrap');svg.innerHTML='';
@@ -307,11 +392,12 @@ function drawRead(state){
 }
 function readInput(m,src){
   if(!G.target||G.busy)return;
-  if(same(m,G.target.midi,src)){
-    G.busy=true;G.score++;keyEls[G.target.midi].classList.add('ok');keyEls[G.target.midi].classList.remove('hint');
+  if(same(m,mid(G.target),src)){
+    G.busy=true;G.score++;earn(1);keyEls[G.target.midi].classList.add('ok');keyEls[G.target.midi].classList.remove('hint');
     drawRead('ok');$('name').textContent=G.target.solfa;mood('happy');say(CHEERS[Math.floor(Math.random()*CHEERS.length)]);
     popStar(S.kbd?keyEls[G.target.midi]:null);happy();drawReadStars();
     if(S.timed){setTimeout(()=>{if(S.mode==='read'&&G.left>0)readNext();},550);return;}
+    if(G.score>=10)markProg('read_'+(S.clef||'treble')+'_'+S.lv,1);
     if(G.score>=10)setTimeout(()=>S.mode==='read'&&win(3,'拿到 10 顆星星！',S.lv<2?'要挑戰下一關嗎？':'Do 到高 Do 都會讀了！',{next:S.lv<2}),1100);
     else setTimeout(()=>{if(S.mode==='read')readNext();},1400);
   }else{
@@ -325,9 +411,10 @@ const BEAT=72,X0=70,FIXW=118;
 function songSetup(){
   const so=curSong();
   let h=S.mode==='rhythm'?['第1級','第2級 休止符','第3級 八分音符'].map((t,i)=>`<button class="chip ${i===(S.rlv||0)?'on':''}" data-r="${i}">${t}</button>`).join('')+`<button class="chip" id="newRhy">換一個</button>`
-   :SONGS.map((s,i)=>`<button class="chip ${i===S.song?'on':''}" data-s="${i}">${s.name}</button>`).join('')+(SONGS[S.song].random?`<button class="chip" id="newRhy">換一首</button>`:'');
+   :SONGS.map((s,i)=>`<button class="chip ${i===S.song?'on':''}" data-s="${i}">${s.name}</button>`).join('')+(SONGS[S.song].random?`<button class="chip" id="newRhy">換一首</button>`:'')+`<span class="sep"></span><button class="chip ${S.clef!=='bass'?'on':''}" data-clef="treble">高音譜</button><button class="chip ${S.clef==='bass'?'on':''}" data-clef="bass">低音譜</button>`;
   if(S.mode!=='practice')h+=`<span class="sep"></span>`+TEMPOS.map((t,i)=>`<button class="chip ${i===S.tempo?'on':''}" data-t="${i}">${t.name}</button>`).join('')+`<button class="chip go" id="playBtn"><svg viewBox="0 0 24 24"><path d="M7 4l13 8-13 8z" fill="#fff"/></svg><span>開始</span></button>`;
   $('sub').innerHTML=h;
+  bindClef();if(S.mode==='rhythm')$('sub').querySelectorAll('[data-clef],.sep:last-of-type').forEach(e=>{if(e.dataset.clef)e.remove();});
   $('sub').querySelectorAll('[data-r]').forEach(b=>b.onclick=()=>{S.rlv=+b.dataset.r;G.rhy=null;save();enterMode('rhythm');});
   if($('newRhy'))$('newRhy').onclick=()=>{G.rhy=null;G.rand=null;enterMode(S.mode);};
   $('sub').querySelectorAll('[data-s]').forEach(b=>b.onclick=()=>{S.song=+b.dataset.s;save();enterMode(S.mode);});
@@ -399,17 +486,17 @@ function highlightPractice(){
 function practiceInput(m,src){
   if(src!=='kbd'&&src!=='key'&&performance.now()-(G.advT||0)<160)return;
   const so=curSong();if(G.idx>=so.notes.length)return;const nt=so.notes[G.idx];
-  if(same(m,nt.n.midi,src)){
+  if(same(m,mid(nt.n),src)){
     G.res[G.idx]='done';markNote(G.idx,'done');$('name').textContent=nt.n.solfa;
     if(G.idx%4===3||G.idx===so.notes.length-1){mood('happy');say(CHEERS[Math.floor(Math.random()*CHEERS.length)]);}else say('對！下一個～');
     G.idx++;G.advT=performance.now();
-    if(G.idx>=so.notes.length){G.hl.setAttribute('opacity',0);info(`${so.name}　完成！`);happy();setTimeout(()=>win(3,`彈完〈${so.name}〉了！`,'聽聽看整首曲子，然後試試演奏模式吧',{replay:true,next:true}),700);}
+    if(G.idx>=so.notes.length){earn(3);markProg('prac_'+so.name+(S.clef==='bass'?'_b':''),1);G.hl.setAttribute('opacity',0);info(`${so.name}　完成！`);happy();setTimeout(()=>win(3,`彈完〈${so.name}〉了！`,'聽聽看整首曲子，然後試試演奏模式吧',{replay:true,next:true}),700);}
     else highlightPractice();
   }else{G.wrong++;flashKey(m,'bad',400);mood('oops');say(TRY[Math.min(G.wrong-1,2)]);if(G.wrong>=2)keyEls[nt.n.midi].classList.add('hint');}
 }
 function playSong(so,tempoBpm){
   const a=audio();const b=newBus();const spb=60/tempoBpm;const t0=a.currentTime+.2;
-  so.notes.forEach(nt=>nt.n&&tone(nt.n.midi,0,Math.max(.5,nt.dur*spb*1.1),.3,b,t0+nt.beat*spb));
+  so.notes.forEach(nt=>nt.n&&tone(mid(nt.n),0,Math.max(.5,nt.dur*spb*1.1),.3,b,t0+nt.beat*spb));
   return {t0,spb};
 }
 
@@ -420,7 +507,7 @@ function startPerform(){
   const spb=60/bpm();const b=newBus();const t0=a.currentTime+.35;const st=t0+4*spb;
   if(S.met)for(let k=0;k<4+so.total;k++)click(t0+k*spb,k%4===0,b);
   else for(let k=0;k<4;k++)click(t0+k*spb,k===0,b);
-  if(S.mel&&!mic.on&&!so.rhythm)so.notes.forEach(nt=>nt.n&&tone(nt.n.midi,0,Math.max(.4,nt.dur*spb*.95),.22,b,st+nt.beat*spb));
+  if(S.mel&&!mic.on&&!so.rhythm)so.notes.forEach(nt=>nt.n&&tone(mid(nt.n),0,Math.max(.4,nt.dur*spb*.95),.22,b,st+nt.beat*spb));
   G.spb=spb;G.st=st;G.running=true;G.lastBeat=-99;
   $('playBtn').querySelector('span').textContent='停止';
   const loop=()=>{if(!G.running)return;const bt=(ac.currentTime-G.st)/G.spb;
@@ -437,17 +524,18 @@ function performInput(m,src,t){
   if(!G.running)return;const so=curSong();const bt=(t-G.st)/G.spb;
   let best=-1,bd=9;so.notes.forEach((nt,i)=>{if(G.res[i])return;const d=Math.abs(bt-nt.beat);if(d<.5&&d<bd){bd=d;best=i;}});
   if(best<0)return;
-  if(so.rhythm||same(m,so.notes[best].n.midi,src)){const r=bd<.22?'perfect':'good';G.res[best]=r;markNote(best,r);if(r==='perfect')mood('happy');}
+  if(so.rhythm||same(m,mid(so.notes[best].n),src)){const r=bd<.22?'perfect':'good';G.res[best]=r;markNote(best,r);if(r==='perfect')mood('happy');}
   else{flashKey(m,'bad',400);mood('oops');}
 }
 function finishPerform(){
   stopPerform();const so=curSong();const p=G.res.filter(r=>r==='perfect').length,g=G.res.filter(r=>r==='good').length,tot=G.res.filter(r=>r!=='rest').length;
-  const ratio=(p+g*.6)/tot;const stars=ratio>=.85?3:ratio>=.55?2:1;
+  const ratio=(p+g*.6)/tot;const stars=ratio>=.85?3:ratio>=.55?2:1;earn(stars);markProg(so.rhythm?'rhy_'+(S.rlv||0):'perf_'+so.name+(S.clef==='bass'?'_b':''),stars);
   info(`很準 ${p}　不錯 ${g}　錯過 ${tot-p-g}`);say(stars===3?'太棒了！':'彈完了！');
   win(stars,stars===3?'拍子好準！':stars===2?'很不錯喔！':'彈完了，好棒！',`很準 ${p} 個、不錯 ${g} 個`+(stars<3&&S.tempo>0?'，可以先選「慢」試試':''),{next:true});
 }
 
 /* ---------- modes ---------- */
+function bindClef(){$('sub').querySelectorAll('[data-clef]').forEach(b=>b.onclick=()=>{S.clef=b.dataset.clef;save();enterMode(S.mode);});}
 function enterMode(m){
   clearInterval(G.timer);stopPerform();stopBus();S.mode=m;save();
   document.querySelectorAll('.tab').forEach(t=>t.classList.toggle('on',t.dataset.m===m));
@@ -455,8 +543,8 @@ function enterMode(m){
   if(m==='read')readSetup();else songSetup();
 }
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{audio();enterMode(t.dataset.m);});
-$('listen').onclick=()=>{audio();if(S.mode==='read'){if(G.target)tone(G.target.midi,0,1.2,.3);}else{stopPerform();playSong(curSong(),curSong().tempo);}};
-$('go').onclick=()=>{audio();$('start').classList.add('hide');enterMode(S.mode);};
+$('listen').onclick=()=>{audio();if(S.mode==='read'){if(G.target)tone(mid(G.target),0,1.2,.3);}else{stopPerform();playSong(curSong(),curSong().tempo);}};
+$('go').onclick=()=>{audio();showPicker();};
 $('again').onclick=()=>{$('win').classList.add('hide');enterMode(S.mode);};
 $('replay').onclick=()=>{playSong(curSong(),curSong().tempo);};
 $('nextBtn').onclick=()=>{$('win').classList.add('hide');
@@ -475,13 +563,13 @@ chipRow('colRow',()=>S.color?'1':'0',v=>S.color=v==='1');
 chipRow('sndRow',()=>S.autoSnd?'1':'0',v=>S.autoSnd=v==='1');
 chipRow('melRow',()=>S.mel?'1':'0',v=>S.mel=v==='1');
 chipRow('metRow',()=>S.met?'1':'0',v=>S.met=v==='1');
-$('gear').onclick=()=>{stopPerform(true);$('kbdRow').sync();$('settings').classList.remove('hide');};
+$('gear').onclick=()=>askPin(()=>{stopPerform(true);$('kbdRow').sync();$('settings').classList.remove('hide');});
 $('closeSet').onclick=()=>{$('settings').classList.add('hide');if(G.dirty){G.dirty=false;refreshKeys();if(S.mode==='read')drawRead('');else enterMode(S.mode);}};
 $('kbdBtn').onclick=()=>{S.kbd=!S.kbd;save();refreshKeys();setTimeout(()=>window.dispatchEvent(new Event('resize')),30);};
 
 /* computer keys */
 const KB={a:60,s:62,d:64,f:65,g:67,h:69,j:71,k:72,w:61,e:63,t:66,y:68,u:70};
-window.addEventListener('keydown',e=>{if(e.repeat)return;const m=KB[e.key.toLowerCase()];if(m)input(m,'key');});
+window.addEventListener('keydown',e=>{if(e.repeat)return;const m=KB[e.key.toLowerCase()];if(m)input(m+off(),'key');});
 
 /* MIDI */
 try{if(navigator.requestMIDIAccess)navigator.requestMIDIAccess().then(acc=>{const hook=i=>i.onmidimessage=ev=>{const[s,n,v]=ev.data;if((s&0xf0)===0x90&&v>0){if(sfxOn())tone(n,0,1,.25);input(n,'midi');}};acc.inputs.forEach(hook);acc.onstatechange=e=>{if(e.port.type==='input'&&e.port.state==='connected')hook(e.port);};}).catch(()=>{});}catch(e){}
@@ -533,6 +621,115 @@ function micLoop(){
   mic.raf=requestAnimationFrame(micLoop);
 }
 $('micBtn').onclick=()=>mic.on?micStop():micStart();
+
+/* ---------- students & rewards ---------- */
+const AVC=['#f4845f','#5b5bd6','#30a46c','#0fa3c7','#c24ccf','#e6b012','#e5484d','#8d6e63'];
+let DB={studs:[],pin:'0000',minutes:5};
+try{Object.assign(DB,JSON.parse(localStorage.getItem('ng_db')||'{}'));}catch(e){}
+function saveDB(){try{localStorage.setItem('ng_db',JSON.stringify(DB));}catch(e){}}
+let CUR=null;
+const TH=[15,40,70,110,160,220,290,370,460,560,670,800];
+const SN=['小音符','黃色小鳥','小鋼琴','愛心','太陽','小花','高音譜號','小鼓','鈴鐺','皇冠','彩虹','金獎盃'];
+const SC=['#ffe0d1','#fff3c4','#e3e3ff','#ffd9de','#fff0c2','#e2f6e8','#e6f4fb','#ffe7cc','#fdf1c7','#f6e3fb','#dff3ff','#fff1c2'];
+function stickerSvg(i){
+  const ic=[
+   '<ellipse cx="26" cy="40" rx="8" ry="6" transform="rotate(-20 26 40)" fill="#e5484d"/><path d="M33 39V16q10 3 11 13q-4-5-11-6" stroke="#e5484d" stroke-width="3" fill="#e5484d"/>',
+   '<circle cx="30" cy="33" r="15" fill="#ffd166"/><circle cx="25" cy="30" r="2.2" fill="#3b2f22"/><circle cx="35" cy="30" r="2.2" fill="#3b2f22"/><path d="M27 35l3 3 3-3z" fill="#f4845f"/><path d="M32 18v-7q6 2 6 7" stroke="#4a3b2a" stroke-width="2" fill="none"/>',
+   '<rect x="12" y="18" width="36" height="26" rx="3" fill="#fff" stroke="#4a3b2a" stroke-width="2"/><path d="M21 18v26M30 18v26M39 18v26" stroke="#4a3b2a" stroke-width="1.5"/><rect x="18" y="18" width="5" height="15" fill="#4a3b2a"/><rect x="27" y="18" width="5" height="15" fill="#4a3b2a"/><rect x="37" y="18" width="5" height="15" fill="#4a3b2a"/>',
+   '<path d="M30 46C14 35 13 22 21 19q6-2 9 5q3-7 9-5c8 3 7 16-9 27z" fill="#e5484d"/>',
+   '<circle cx="30" cy="31" r="10" fill="#ffb703"/><g stroke="#ffb703" stroke-width="3" stroke-linecap="round"><path d="M30 13v4M30 45v4M12 31h4M44 31h4M17 18l3 3M40 41l3 3M17 44l3-3M40 21l3-3"/></g>',
+   '<g fill="#f7a1c4"><circle cx="30" cy="21" r="7"/><circle cx="39" cy="28" r="7"/><circle cx="36" cy="38" r="7"/><circle cx="24" cy="38" r="7"/><circle cx="21" cy="28" r="7"/></g><circle cx="30" cy="30" r="5" fill="#ffd166"/>',
+   '<path d="'+CLEF+'" fill="#0f6fa0" transform="translate(16,-62) scale(.95)"/>',
+   '<ellipse cx="30" cy="24" rx="15" ry="5" fill="#fff" stroke="#c0392b" stroke-width="2"/><path d="M15 24v14q15 8 30 0V24q-15 8-30 0z" fill="#e5484d"/><path d="M38 10l-6 12M22 10l6 12" stroke="#8d6e63" stroke-width="3" stroke-linecap="round"/>',
+   '<path d="M30 12c-9 0-12 9-12 17s-3 10-5 12h34c-2-2-5-4-5-12s-3-17-12-17z" fill="#f2b705"/><circle cx="30" cy="45" r="4" fill="#d68c00"/>',
+   '<path d="M13 40l-2-20 10 8 9-13 9 13 10-8-2 20z" fill="#f2b705" stroke="#d68c00" stroke-width="2" stroke-linejoin="round"/><circle cx="30" cy="33" r="3" fill="#e5484d"/>',
+   '<g fill="none" stroke-width="4"><path d="M10 42a20 20 0 0 1 40 0" stroke="#e5484d"/><path d="M15 42a15 15 0 0 1 30 0" stroke="#f2b705"/><path d="M20 42a10 10 0 0 1 20 0" stroke="#30a46c"/><path d="M25 42a5 5 0 0 1 10 0" stroke="#5b5bd6"/></g>',
+   '<path d="M20 14h20v10a10 10 0 0 1-20 0z" fill="#f2b705"/><path d="M20 17h-6q0 9 7 10M40 17h6q0 9-7 10" stroke="#f2b705" stroke-width="3" fill="none"/><rect x="27" y="33" width="6" height="7" fill="#d68c00"/><rect x="21" y="40" width="18" height="5" rx="2" fill="#8d6e63"/>'];
+  return `<svg viewBox="0 0 60 60"><circle cx="30" cy="30" r="27" fill="${SC[i]}" stroke="#fff" stroke-width="3"/><circle cx="30" cy="30" r="27" fill="none" stroke="#ecd8b6" stroke-width="1.5" stroke-dasharray="3 3"/>${ic[i]}</svg>`;
+}
+const stickCount=lt=>TH.filter(t=>lt>=t).length;
+function earn(n){if(!CUR)return;const before=stickCount(CUR.lifetime);CUR.lifetime+=n;CUR.balance+=n;if(G.sess)G.sess.earned+=n;saveDB();updStud();
+  const after=stickCount(CUR.lifetime);if(after>before){G.pendingSticker=after-1;setTimeout(showNewSticker,1500);}}
+function showNewSticker(){if(G.pendingSticker==null)return;const i=G.pendingSticker;G.pendingSticker=null;$('nsBox').innerHTML=stickerSvg(i);$('nsName').textContent=SN[i];$('newSticker').classList.remove('hide');setTimeout(()=>{fanfare();confetti();},100);}
+$('nsOk').onclick=()=>$('newSticker').classList.add('hide');
+function markProg(k,v){if(!CUR)return;CUR.prog=CUR.prog||{};if(!(CUR.prog[k]>=v))CUR.prog[k]=v;saveDB();}
+function updStud(){if(!CUR)return;$('studAv').style.background=CUR.color;$('studAv').textContent=CUR.name.slice(0,1);$('studName').textContent=CUR.name;$('studStars').textContent=CUR.balance;}
+const starI='<svg viewBox="0 0 24 24"><path d="'+STAR+'" fill="#ffc53d" stroke="#e8a317" stroke-width="1.4"/></svg>';
+function showPicker(){
+  endSession(false);
+  $('start').classList.add('hide');$('ended').classList.add('hide');$('album').classList.add('hide');
+  const g=$('pgrid');
+  g.innerHTML=DB.studs.length?DB.studs.map((st,i)=>`<button class="pbtn" data-i="${i}"><div class="av" style="background:${st.color}">${st.name.slice(0,1)}</div><b>${st.name}</b><span>${starI}${st.balance}　貼紙 ${stickCount(st.lifetime)}</span></button>`).join('')
+   :'<div style="font-size:17px;color:#8a7a66">還沒有學生，請老師先新增</div>';
+  g.querySelectorAll('.pbtn').forEach(b=>b.onclick=()=>startSession(DB.studs[+b.dataset.i]));
+  $('picker').classList.remove('hide');
+}
+$('pickTeacher').onclick=()=>askPin(showTeacher);
+function startSession(st){CUR=st;audio();G.sess={earned:0,left:DB.minutes*60,start:Date.now()};updStud();$('picker').classList.add('hide');
+  say(`${st.name}，一起來玩吧！`);enterMode(S.mode);clearInterval(G.clockT);G.clockT=setInterval(tick,1000);tick();}
+function tick(){if(!G.sess)return;const c=$('clock');
+  if(!DB.minutes){c.textContent='';c.style.display='none';return;}c.style.display='';
+  const busy=!$('ended').classList.contains('hide')||!$('settings').classList.contains('hide')||!$('teacher').classList.contains('hide')||!$('pin').classList.contains('hide');
+  if(!busy&&G.sess.left>0)G.sess.left--;
+  const l=Math.max(0,G.sess.left);c.textContent=`${Math.floor(l/60)}:${String(l%60).padStart(2,'0')}`;c.classList.toggle('low',l<=30);
+  if(l<=0&&!G.running&&$('win').classList.contains('hide')&&$('newSticker').classList.contains('hide')&&$('ended').classList.contains('hide'))showEnded();}
+function showEnded(){clearInterval(G.timer);stopPerform();if(mic.on)micStop();
+  const e=G.sess?G.sess.earned:0;$('endBird').innerHTML=bird.innerHTML;
+  $('endSub').textContent=`${CUR.name} 今天得到 ${e} 顆星星！`;
+  $('endStars').innerHTML=starI.repeat(Math.min(e,40));
+  const n=stickCount(CUR.lifetime);$('endSticker').innerHTML=n<TH.length?`<div style="font-size:16px;color:#8a7a66">再 ${TH[n]-CUR.lifetime} 顆星星就能拿到下一張貼紙「${SN[n]}」</div>`:'<div style="font-size:16px">貼紙全部收集完成了！</div>';
+  $('ended').classList.remove('hide');fanfare();}
+function endSession(log=true){if(G.sess&&CUR&&G.sess.earned>0){CUR.log=CUR.log||[];CUR.log.push({d:new Date().toISOString().slice(0,10),s:G.sess.earned});if(CUR.log.length>60)CUR.log.shift();saveDB();}G.sess=null;clearInterval(G.clockT);}
+$('endNext').onclick=()=>showPicker();
+$('endAlbum').onclick=()=>{$('ended').classList.add('hide');showAlbum();};
+$('endMore').onclick=()=>askPin(()=>{G.sess.left=120;$('ended').classList.add('hide');tick();});
+$('studBtn').onclick=()=>{if(CUR)showAlbum();};
+function progHtml(st){const P=st.prog||{};const lab=[];
+  ['treble','bass'].forEach(c=>{const cn=c==='bass'?'低音':'高音';LEVELS.forEach((l,i)=>lab.push([`${cn} ${l.name.split(' ')[0]}`,P[`read_${c}_${i}`]]));if(P['timed_'+c])lab.push([`${cn}限時最高 ${P['timed_'+c]} 個`,1]);});
+  SONGS.filter(x=>!x.random).forEach(so=>{lab.push([`練習〈${so.name}〉`,P['prac_'+so.name]]);if(P['perf_'+so.name])lab.push([`演奏〈${so.name}〉${P['perf_'+so.name]} 星`,1]);});
+  [0,1,2].forEach(i=>{if(P['rhy_'+i])lab.push([`節奏第${i+1}級 ${P['rhy_'+i]} 星`,1]);});
+  return lab.map(([t,d])=>`<span class="pc ${d?'done':''}">${d?'✓ ':''}${t}</span>`).join('');}
+function showAlbum(){const st=CUR;$('albumTitle').textContent=`${st.name} 的貼紙簿`;
+  $('albumSub').innerHTML=`現在有 <b>${st.balance}</b> 顆星星（總共得過 ${st.lifetime} 顆）`;
+  $('sgrid').innerHTML=TH.map((t,i)=>st.lifetime>=t?`<div class="sticker">${stickerSvg(i)}${SN[i]}</div>`:`<div class="sticker lock">${stickerSvg(i)}還差 ${t-st.lifetime}</div>`).join('');
+  $('albumProg').innerHTML=progHtml(st);$('album').classList.remove('hide');}
+$('albumClose').onclick=()=>{$('album').classList.add('hide');if(G.sess&&DB.minutes&&G.sess.left<=0)$('ended').classList.remove('hide');else if(!G.sess)showPicker();};
+/* PIN */
+let pinCb=null,pinBuf='';
+function askPin(cb){pinCb=cb;pinBuf='';drawPin();$('pin').classList.remove('hide');}
+function drawPin(){[...$('pindots').children].forEach((d,i)=>d.classList.toggle('on',i<pinBuf.length));}
+$('pad').innerHTML=[1,2,3,4,5,6,7,8,9,'',0,'←'].map(k=>k===''?'<span></span>':`<button data-k="${k}">${k}</button>`).join('');
+$('pad').onclick=e=>{const k=e.target.dataset.k;if(k==null)return;if(k==='←')pinBuf=pinBuf.slice(0,-1);else if(pinBuf.length<4)pinBuf+=k;drawPin();
+  if(pinBuf.length===4){if(pinBuf===DB.pin){$('pin').classList.add('hide');const c=pinCb;pinCb=null;c&&c();}else{$('pindots').animate([{transform:'translateX(-8px)'},{transform:'translateX(8px)'},{transform:'none'}],{duration:300});pinBuf='';setTimeout(drawPin,300);}}};
+$('pinCancel').onclick=()=>{$('pin').classList.add('hide');pinCb=null;};
+/* teacher */
+function showTeacher(){$('settings').classList.add('hide');drawTeacher();$('teacher').classList.remove('hide');}
+function drawTeacher(){
+  $('tlist').innerHTML=DB.studs.length?DB.studs.map((st,i)=>{const last=(st.log||[]).slice(-1)[0];
+    return `<div class="trow"><div class="av" style="background:${st.color}">${st.name.slice(0,1)}</div><div class="nm">${st.name}</div>
+    <div class="st">可用 ${st.balance} 星・累積 ${st.lifetime} 星・貼紙 ${stickCount(st.lifetime)}/12${last?`・上次 ${last.d.slice(5)} 得 ${last.s} 星`:''}</div>
+    <button class="chip" data-a="spend" data-i="${i}">兌換獎品</button><button class="chip" data-a="ren" data-i="${i}">改名</button><button class="chip" data-a="del" data-i="${i}">刪除</button>
+    <div class="det">${progHtml(st)}</div></div>`;}).join(''):'<div class="note">還沒有學生</div>';
+  $('tlist').querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>tAction(b.dataset.a,+b.dataset.i,b));
+  $('minRow').querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',+c.dataset.v===DB.minutes));
+}
+function inlineAsk(btn,ph,cb,type='text'){const row=btn.parentElement;if(row.querySelector('.ia'))return;const d=document.createElement('div');d.className='row ia';d.style.width='100%';
+  d.innerHTML=`<input placeholder="${ph}" ${type==='num'?'inputmode="numeric"':''}><button class="chip go">確定</button><button class="chip">取消</button>`;row.appendChild(d);const inp=d.querySelector('input');inp.focus();
+  d.children[1].onclick=()=>{cb(inp.value.trim());};d.children[2].onclick=()=>d.remove();}
+function tAction(a,i,btn){const st=DB.studs[i];
+  if(a==='spend')inlineAsk(btn,`要扣幾顆星？（現在 ${st.balance} 顆）`,v=>{const n=parseInt(v);if(n>0&&n<=st.balance){st.balance-=n;saveDB();drawTeacher();toast(`${st.name} 兌換了 ${n} 顆星星`);}else toast('星星數量不對喔');},'num');
+  if(a==='ren')inlineAsk(btn,'新名字',v=>{if(v){st.name=v.slice(0,8);saveDB();drawTeacher();}});
+  if(a==='del')inlineAsk(btn,`輸入「刪除」確認刪掉 ${st.name}`,v=>{if(v==='刪除'){DB.studs.splice(i,1);if(CUR===st)CUR=null;saveDB();drawTeacher();}});
+}
+$('addStud').onclick=()=>{const v=$('newName').value.trim();if(!v)return;DB.studs.push({id:Date.now(),name:v.slice(0,8),color:AVC[DB.studs.length%AVC.length],lifetime:0,balance:0,prog:{},log:[]});saveDB();$('newName').value='';drawTeacher();};
+$('minRow').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{DB.minutes=+c.dataset.v;saveDB();drawTeacher();});
+$('savePin').onclick=()=>{const v=$('newPin').value;if(/^\d{4}$/.test(v)){DB.pin=v;saveDB();$('newPin').value='';toast('密碼已更新');}else toast('請輸入 4 位數字');};
+$('copyBk').onclick=()=>{const t=JSON.stringify(DB);$('backup').value=t;try{navigator.clipboard.writeText(t).then(()=>toast('已複製備份'),()=>toast('請手動全選框框裡的文字複製'));}catch(e){toast('請手動全選框框裡的文字複製');}};
+$('importBk').onclick=()=>{try{const d=JSON.parse($('backup').value);if(!Array.isArray(d.studs))throw 0;DB=Object.assign({studs:[],pin:'0000',minutes:5},d);saveDB();CUR=null;drawTeacher();toast('匯入完成');}catch(e){toast('備份文字不正確');}};
+$('teacherClose').onclick=()=>{$('teacher').classList.add('hide');if(!CUR)showPicker();else updStud();};
+/* settings: link to teacher */
+$('closeSet').insertAdjacentHTML('beforebegin','<button class="btn sec" id="toTeacher">學生管理</button>');
+$('toTeacher').onclick=()=>showTeacher();
 
 /* start screen bird copy */
 $('startBird').innerHTML=bird.innerHTML;
