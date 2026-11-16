@@ -283,7 +283,9 @@ html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscro
     <div class="t">顏色提示（音符和琴鍵同色）</div><div class="row" id="colRow"><button class="chip" data-v="1">開</button><button class="chip" data-v="0">關</button></div>
     <div class="t">認音符時先播放聲音</div><div class="row" id="sndRow"><button class="chip" data-v="1">開</button><button class="chip" data-v="0">關</button></div>
     <div class="t">演奏時一起播旋律（用麥克風時會自動關閉）</div><div class="row" id="melRow"><button class="chip" data-v="1">開</button><button class="chip" data-v="0">關</button></div>
-    <div class="t">演奏和示範時加上伴奏（用麥克風時自動關閉）</div><div class="row" id="accRow"><button class="chip" data-v="1">開</button><button class="chip" data-v="0">關</button></div>
+    <div class="t">演奏和示範時加上伴奏</div><div class="row" id="accRow"><button class="chip" data-v="1">開</button><button class="chip" data-v="0">關</button></div>
+    <div class="t">伴奏音量</div><div class="row" id="accVolRow"><button class="chip" data-v="0">小</button><button class="chip" data-v="1">中</button><button class="chip" data-v="2">大</button></div>
+    <div class="t">用麥克風彈真鋼琴時也要伴奏（請戴耳機，或把喇叭放遠一點）</div><div class="row" id="accMicRow"><button class="chip" data-v="1">要</button><button class="chip" data-v="0">不要</button></div>
     <div class="t">節拍器</div><div class="row" id="metRow"><button class="chip" data-v="1">開</button><button class="chip" data-v="0">關</button></div>
   </div>
   <button class="btn" id="closeSet">好了</button>
@@ -644,8 +646,8 @@ function readInput(m,src){
 }
 
 /* ---------- SONG staff ---------- */
-const BEAT=72,X0=70,FIXW=118,BPAD=30;
-function xb(b){const m=G.meterR||4;const bar=Math.floor(b/m+1e-9);const f=b-bar*m;return X0+b*BEAT+bar*BPAD+Math.max(0,f-(m-.5))/.5*BPAD;}
+const BEAT=100,X0=70,FIXW=118,BPAD=30;
+function xb(b){return X0+b*BEAT;}
 function bestStars(i,c=clefKey()){const L=c==='grand'?GSONGS:SONGS;const P=(CUR&&CUR.prog)||{};return P['perf_'+L[i].name+'_'+c]||0;}
 function hasProg(i,c){const L=c==='grand'?GSONGS:SONGS;const P=(CUR&&CUR.prog)||{};const n=L[i].name;return !!(P['perf_'+n+'_'+c]||P['prac_'+n+'_'+c]);}
 function unlocked(i,c=clefKey()){if(i===0||!CUR)return true;if(CUR.prog&&CUR.prog.unlockAll)return true;return bestStars(i,c)>=1||bestStars(i-1,c)>=1||hasProg(i,c);}
@@ -716,13 +718,13 @@ function renderSong(){
   if(so.rhythm)el('line',{x1:-50,x2:len+W,y1:100,y2:100,stroke:'#5b4a36','stroke-width':2},scroll);else allLines(scroll,-50,len+W);
   G.ng=[];
   const by1=so.rhythm?80:top,by2=so.rhythm?120:bot;
-  const MT=so.meter||4;for(let b=MT;b<so.total;b+=MT){const x=xb(b)-30;el('line',{x1:x,x2:x,y1:by1,y2:by2,stroke:'#5b4a36','stroke-width':2},scroll);}
+  const MT=so.meter||4;for(let b=MT;b<so.total;b+=MT){const x=xb(b)-19;el('line',{x1:x,x2:x,y1:by1,y2:by2,stroke:'#5b4a36','stroke-width':2},scroll);}
   const ex=xb(so.total)-14;el('line',{x1:ex,x2:ex,y1:by1,y2:by2,stroke:'#5b4a36','stroke-width':2},scroll);el('rect',{x:ex+5,y:by1,width:6,height:by2-by1,fill:'#5b4a36'},scroll);
   // beams: pair of eighths starting on a beat, same staff
   const beamOf={};so.notes.forEach((nt,i)=>{if(nt.rest||nt.dur!==.5||nt.beat%1!==0)return;const j=so.notes.findIndex((m,k)=>k>i&&!m.rest&&m.dur===.5&&m.beat===nt.beat+.5&&m.staff===nt.staff);if(j>0){beamOf[i]={pair:j,first:true};beamOf[j]={pair:i,first:false};}});
   so.notes.forEach((nt,i)=>{const x=xb(nt.beat);let g;
     if(nt.rest&&nt.dur===.5&&!grand){g=el('g',{style:'--c:#4a3b2a'},scroll);el('circle',{class:'nf',cx:x-3,cy:88,r:4.5},g);el('path',{class:'ns',d:`M${x-3} 91q6 0 9-5l-8 26`,'stroke-width':3,fill:'none','stroke-linecap':'round'},g);}
-    else if(nt.rest){if(grand){G.ng.push(null);return;}g=el('g',{style:'--c:#4a3b2a'},scroll);el('path',{class:'nf',d:`M${x-4} 76l9 11-6 8 8 11c-6-3-11-1-8 6-8-6-6-12 0-11l-9-11 7-7-4-5z`},g);}
+    else if(nt.rest){if(grand){G.ng.push(null);return;}g=el('g',{style:'--c:#4a3b2a'},scroll);el('path',{class:'nf',d:`M${x+3} 76l9 11-6 8 8 11c-6-3-11-1-8 6-8-6-6-12 0-11l-9-11 7-7-4-5z`},g);}
     else{const ly=so.rhythm?100:localY(nt.d,nt.staff),oy=so.rhythm?0:staffOff(nt.staff);const o={rhythm:so.rhythm};const bm=beamOf[i];
       if(bm){const a=bm.first?nt:so.notes[bm.pair],b=bm.first?so.notes[bm.pair]:nt;const la=so.rhythm?100:localY(a.d,a.staff),lb=so.rhythm?100:localY(b.d,b.staff);
         const up=so.rhythm||(la+lb)/2>100;o.up=up;o.noFlag=true;
@@ -787,12 +789,14 @@ function harmony(so){const m=so.meter||4;const bars=Math.ceil(so.total/m);const 
   return out;}
 function accTone(m,t,dur,vol,dest){const a=audio();const o=a.createOscillator(),o2=a.createOscillator(),g=a.createGain();o.type='sine';o2.type='triangle';o.frequency.value=freq(m);o2.frequency.value=freq(m)*2;
   const g2=a.createGain();g2.gain.value=.15;o2.connect(g2);g2.connect(g);o.connect(g);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+dur);g.connect(dest);o.start(t);o2.start(t);o.stop(t+dur+.05);o2.stop(t+dur+.05);}
-function accOn(so){return S.acc!==false&&!mic.on&&!so.rhythm&&!so.grand;}
-function accomp(so,t0,spb,dest){if(!accOn(so))return;const m=so.meter||4;const H=harmony(so);const low=clefKey()==='bass';
-  H.forEach((c,b)=>{const root=c[0],tri=c[1];const bt=t0+b*m*spb;const bassM=(low?24:36)+root;const ch=tri.slice(0,3).map(pc=>{let x=(low?60:48)+pc;if(x<(low?60:52))x+=12;return x;});
-    accTone(bassM,bt,m*spb*.95,.16,dest);
-    if(m===3){[1,2].forEach(k=>ch.forEach(x=>accTone(x,bt+k*spb,spb*.8,.045,dest)));}
-    else{const pat=[ch[0],ch[2],ch[1],ch[2]];for(let k=0;k<4;k++)accTone(pat[k],bt+k*spb,spb*.9,.06,dest);}});}
+function accOn(so){return S.acc!==false&&(!mic.on||S.accMic)&&!so.rhythm&&!so.grand;}
+function accomp(so,t0,spb,dest){if(!accOn(so))return;const m=so.meter||4;const H=harmony(so);const low=clefKey()==='bass';const V=[.7,1.4,2.2][S.accVol==null?1:S.accVol]*(mic.on?.7:1);
+  H.forEach((c,b)=>{const root=c[0],tri=c[1].slice(0,3);const bt=t0+b*m*spb;const last=b===H.length-1;
+    const bassR=(low?24:36)+root,bassF=bassR+7;const ch=tri.map(pc=>{let x=(low?60:48)+pc;if(x<(low?60:52))x+=12;return x;}).sort((a,b)=>a-b);
+    if(last){accTone(bassR,bt,m*spb*1.2,.16*V,dest);ch.forEach(x=>tone(x,0,m*spb*1.1,.05*V,dest,bt));return;}
+    if(m===3){accTone(bassR,bt,spb*1.6,.16*V,dest);[1,2].forEach(k=>ch.forEach(x=>tone(x,0,spb*.7,.035*V,dest,bt+k*spb)));}
+    else{accTone(bassR,bt,spb*1.9,.16*V,dest);accTone(bassF,bt+2*spb,spb*1.9,.12*V,dest);
+      const pat=[ch[0],ch[2],ch[1],ch[2],ch[0],ch[2],ch[1],ch[2]];pat.forEach((x,k)=>tone(x,0,spb*.9,(k%2?.03:.045)*V,dest,bt+k*spb/2));}});}
 
 /* ---------- PERFORM ---------- */
 function startPerform(demo=true){
@@ -880,6 +884,8 @@ chipRow('colRow',()=>S.color?'1':'0',v=>S.color=v==='1');
 chipRow('sndRow',()=>S.autoSnd?'1':'0',v=>S.autoSnd=v==='1');
 chipRow('melRow',()=>S.mel?'1':'0',v=>S.mel=v==='1');
 chipRow('accRow',()=>S.acc!==false?'1':'0',v=>S.acc=v==='1');
+chipRow('accVolRow',()=>String(S.accVol==null?1:S.accVol),v=>S.accVol=+v);
+chipRow('accMicRow',()=>S.accMic?'1':'0',v=>{S.accMic=v==='1';if(mic.on){micStop();toast('麥克風設定改了，請再按一次麥克風');}});
 chipRow('metRow',()=>S.met?'1':'0',v=>S.met=v==='1');
 $('gear').onclick=()=>askPin(()=>{stopPerform(true);$('kbdRow').sync();$('settings').classList.remove('hide');});
 $('closeSet').onclick=()=>{$('settings').classList.add('hide');if(G.dirty){G.dirty=false;refreshKeys();if(S.mode==='read')drawRead('');else enterMode(S.mode);}};
@@ -912,7 +918,7 @@ async function micStart(){
   audio();
   try{
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error('none');
-    const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
+    const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:!!S.accMic,noiseSuppression:false,autoGainControl:false}});
     mic.stream=stream;mic.src=ac.createMediaStreamSource(stream);mic.an=ac.createAnalyser();mic.an.fftSize=2048;mic.src.connect(mic.an);
     mic.buf=new Float32Array(mic.an.fftSize);mic.on=true;mic.hist=[];mic.cand=-1;mic.cnt=0;mic.lastEmit=null;mic.armed=false;
     $('micBtn').classList.add('live');$('micinfo').classList.add('on');$('listen').style.display='none';
