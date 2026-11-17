@@ -308,7 +308,8 @@ html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscro
 <div class="overlay hide" id="picker">
   <div class="big">今天是誰要玩？</div>
   <div class="pgrid" id="pgrid"></div>
-  <button class="btn sec" id="pickTeacher">老師：管理學生</button>
+  <div><button class="btn" id="pickGuest">訪客試玩</button><button class="btn sec" id="pickTeacher">老師：管理學生</button></div>
+  <div class="note">訪客模式：所有曲子都打開、不限時間，離開後不會留下紀錄。</div>
 </div>
 <div class="overlay hide" id="album">
   <div class="big" id="albumTitle">我的曲子</div>
@@ -325,7 +326,7 @@ html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscro
   <div class="btabs" id="bookTabs"></div>
   <div class="bookwrap"><div class="bpages" id="bookPages"></div></div>
   <div class="bnav"><button class="chip" id="bPrev">‹ 上一頁</button><span id="bookPageNo"></span><button class="chip" id="bNext">下一頁 ›</button></div>
-  <div><button class="btn sec" id="bookSongs">我的曲子</button><button class="btn" id="bookClose">回去玩</button></div>
+  <div><button class="btn sec" id="bookSongs">我的曲子</button><button class="btn sec" id="bookSwitch">換人</button><button class="btn" id="bookClose">回去玩</button></div>
 </div>
 <div class="overlay hide" id="stkView" style="z-index:14">
   <div class="svbox" id="svBox"></div>
@@ -1012,15 +1013,16 @@ function showPicker(){
   $('start').classList.add('hide');$('ended').classList.add('hide');$('album').classList.add('hide');
   const g=$('pgrid');
   g.innerHTML=DB.studs.length?DB.studs.map((st,i)=>`<button class="pbtn" data-i="${i}"><div class="av" style="background:${st.color}">${st.name.slice(0,1)}</div><b>${st.name}</b></button>`).join('')
-   :'<div style="font-size:17px;color:#8a7a66">還沒有學生，請老師先新增</div>';
+   :'<div style="font-size:17px;color:#8a7a66">還沒有學生，可以先按「訪客試玩」，或請老師新增學生</div>';
   g.querySelectorAll('.pbtn').forEach(b=>b.onclick=()=>startSession(DB.studs[+b.dataset.i]));
   $('picker').classList.remove('hide');
 }
 $('pickTeacher').onclick=()=>askPin(showTeacher);
-function startSession(st){CUR=st;audio();G.sess={gains:[],left:DB.minutes*60};updStud();$('picker').classList.add('hide');
+$('pickGuest').onclick=()=>{startSession({id:'guest',guest:true,name:'訪客',color:'#8d6e63',prog:{unlockAll:true},stickers:[]});};
+function startSession(st){CUR=st;$('studBtn').title=st.guest?'點這裡換人':'';audio();G.sess={gains:[],left:DB.minutes*60};updStud();$('picker').classList.add('hide');
   say(`${st.name}，一起來玩吧！`);enterMode(S.mode);clearInterval(G.clockT);G.clockT=setInterval(tick,1000);tick();}
 function tick(){if(!G.sess)return;const c=$('clock');
-  if(!DB.minutes){c.style.display='none';return;}c.style.display='';
+  if(!DB.minutes||(CUR&&CUR.guest)){c.style.display='none';return;}c.style.display='';
   const busy=['ended','settings','teacher','pin','songs','album','sticker','bookOv','stkView','rhySetOv'].some(id=>!$(id).classList.contains('hide'));
   if(!busy&&G.sess.left>0)G.sess.left--;
   const l=Math.max(0,G.sess.left);c.textContent=`${Math.floor(l/60)}:${String(l%60).padStart(2,'0')}`;c.classList.toggle('low',l<=30);
@@ -1039,6 +1041,7 @@ $('svBox').onclick=()=>{const b=$('svBox');const cl=b.className;b.className='svb
 $('svClose').onclick=()=>$('stkView').classList.add('hide');
 $('bPrev').onclick=()=>{if(bookPage>0){bookPage--;drawBook(-1);}};$('bNext').onclick=()=>{bookPage++;drawBook(1);};
 $('bookClose').onclick=()=>{$('bookOv').classList.add('hide');if(G.sess&&DB.minutes&&G.sess.left<=0)$('ended').classList.remove('hide');};
+$('bookSwitch').onclick=()=>{$('bookOv').classList.add('hide');stopPerform();if(mic.on)micStop();showPicker();};
 $('bookSongs').onclick=()=>{$('bookOv').classList.add('hide');showAlbum();};
 $('songsClose').onclick=()=>$('songs').classList.add('hide');
 function progHtml(st){const keep=CUR;CUR=st;const P=st.prog||{};let h='';const CN={treble:'高音譜',bass:'低音譜',grand:'雙手'};
