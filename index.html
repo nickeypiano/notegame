@@ -597,7 +597,7 @@ function input(m,src){
   const t=ac?ac.currentTime-(src==='mic'?.1:0):0;
   if(S.mode==='read')readInput(m,src);else if(S.mode==='practice')practiceInput(m,src);else performInput(m,src,t);
 }
-const same=(m,target,src)=>src==='kbd'||src==='key'?m===target:(((m-target)%12+12)%12===0||m-target===19||m-target===31);
+const same=(m,target,src)=>src==='kbd'||src==='key'?m===target:(m===target||m-target===19);
 
 /* ---------- READ mode ---------- */
 const CLEFNAMES={treble:'高音',bass:'低音',grand:'雙手'};
@@ -611,7 +611,7 @@ function readSetup(){
   $('sub').querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{S.lv=+b.dataset.lv;S.timed=false;S.dyad=false;save();enterMode('read');});
   $('beats').style.visibility='hidden';$('listenTxt').textContent='聽聽看';
   G.score=0;G.last=null;clearInterval(G.timer);
-  if(S.timed){G.left=30;G.myBest=myBest();G.broke=false;G.timer=setInterval(()=>{G.left--;drawReadStars();if(G.left<=0){clearInterval(G.timer);G.target=null;
+  if(S.timed){G.left=30;G.myBest=myBest();G.broke=false;G.timer=setInterval(()=>{if(!$('sticker').classList.contains('hide'))return;G.left--;drawReadStars();if(G.left<=0){clearInterval(G.timer);G.target=null;
     const prev=G.myBest;const cb=classBest();markProg(tkey(),G.score);const nb=classBest();
     const sub=(G.score>prev&&prev>0?`打破自己的紀錄（原本 ${prev} 個）！`:G.score>prev?'第一次的紀錄！':`我的最高紀錄：${prev} 個`)+(nb.name&&CUR&&nb.name===CUR.name&&G.score>cb.v&&cb.v>0?'　也是全班第一名！':'');
     win(G.score>=12?3:G.score>=7?2:1,`30 秒答對 ${G.score} 個！`,sub,{rank:true});if(G.pendingRead){const n=G.pendingRead;G.pendingRead=null;setTimeout(()=>offerSticker('',`認音符累積答對 ${n} 題！選一張貼紙`),1800);}}},1000);}
@@ -620,7 +620,7 @@ function readSetup(){
 function tkey(){return 'timed30_'+clefKey()+(S.dyad?'_2':'');}
 const READ_GOAL=50;
 function readReward(){if(!CUR)return;CUR.prog=CUR.prog||{};const n=(CUR.prog.readCount||0)+1;CUR.prog.readCount=n;saveDB();
-  if(n%READ_GOAL===0)setTimeout(()=>{if(G.timer&&G.left>0){G.pendingRead=n;}else offerSticker('',`認音符累積答對 ${n} 題！選一張貼紙`);},1200);}
+  if(n%READ_GOAL===0)offerSticker('',`認音符累積答對 ${n} 題！選一張貼紙`);}
 function myBest(){const P=(CUR&&CUR.prog)||{};return P[tkey()]||0;}
 function classBest(){let v=0,name='';(DB.studs||[]).forEach(st=>{const b=(st.prog||{})[tkey()]||0;if(b>v){v=b;name=st.name;}});return {v,name};}
 function rankHtml(){const k=tkey();const L=(DB.studs||[]).map(st=>({n:st.name,c:st.color,v:(st.prog||{})[k]||0})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v).slice(0,5);
