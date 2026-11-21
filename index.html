@@ -497,7 +497,7 @@ function curSong(){
   if(!G.songCache||G.songKey!==key){G.songCache=buildSong(def);G.songKey=key;}return G.songCache;}
 const CHEERS=['答對了！','好棒！','太厲害了！','好聰明！','就是這個！'];
 const TRY=['再試試看～','再找找看！','差一點點！'];
-const TEMPOS=[{name:'慢',f:0.7},{name:'中',f:0.85},{name:'快',f:1}];
+const TEMPOS=[{name:'慢',f:0.7},{name:'中',f:0.9},{name:'快',f:1.25}];
 
 let S={kbd:false,lab:'none',color:false,autoSnd:true,mel:false,met:true,lv:0,song:0,tempo:0,mode:'read',clef:'treble'};
 try{Object.assign(S,JSON.parse(localStorage.getItem('notegame3')||'{}'));}catch(e){}
@@ -597,37 +597,43 @@ function input(m,src){
   const t=ac?ac.currentTime-(src==='mic'?.1:0):0;
   if(S.mode==='read')readInput(m,src);else if(S.mode==='practice')practiceInput(m,src);else performInput(m,src,t);
 }
-const same=(m,target,src)=>src==='kbd'||src==='key'?m===target:((m-target)%12+12)%12===0;
+const same=(m,target,src)=>src==='kbd'||src==='key'?m===target:(((m-target)%12+12)%12===0||m-target===19||m-target===31);
 
 /* ---------- READ mode ---------- */
 const CLEFNAMES={treble:'高音',bass:'低音',grand:'雙手'};
 function clefChips(){return `<span class="sep"></span>`+Object.keys(CLEFNAMES).map(c=>`<button class="chip ${clefKey()===c?'on':''}" data-clef="${c}">${CLEFNAMES[c]}</button>`).join('');}
 function readSetup(){
   if(S.lv>=levels().length)S.lv=0;
-  $('sub').innerHTML=levels().map((l,i)=>`<button class="chip ${i===S.lv&&!S.timed?'on':''}" data-lv="${i}">${l.name}</button>`).join('')+`<button class="chip ${S.timed?'on':''}" id="timedBtn">限時 30 秒</button>`+clefChips();
+  $('sub').innerHTML=levels().map((l,i)=>`<button class="chip ${i===S.lv&&!S.timed?'on':''}" data-lv="${i}">${l.name}</button>`).join('')+`<button class="chip ${S.timed&&!S.dyad?'on':''}" id="timedBtn">限時 30 秒</button><button class="chip ${S.timed&&S.dyad?'on':''}" id="dyadBtn">30 秒雙音</button>`+clefChips();
   bindClef();
-  $('timedBtn').onclick=()=>{S.timed=true;save();enterMode('read');};
+  $('timedBtn').onclick=()=>{S.timed=true;S.dyad=false;save();enterMode('read');};$('dyadBtn').onclick=()=>{S.timed=true;S.dyad=true;save();enterMode('read');};
   if(S.timed){const mb=myBest();say(mb?`你的紀錄是 ${mb} 個，挑戰看看！`:'30 秒能答對幾個？');}
-  $('sub').querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{S.lv=+b.dataset.lv;S.timed=false;save();enterMode('read');});
+  $('sub').querySelectorAll('[data-lv]').forEach(b=>b.onclick=()=>{S.lv=+b.dataset.lv;S.timed=false;S.dyad=false;save();enterMode('read');});
   $('beats').style.visibility='hidden';$('listenTxt').textContent='聽聽看';
   G.score=0;G.last=null;clearInterval(G.timer);
   if(S.timed){G.left=30;G.myBest=myBest();G.broke=false;G.timer=setInterval(()=>{G.left--;drawReadStars();if(G.left<=0){clearInterval(G.timer);G.target=null;
-    const prev=G.myBest;const cb=classBest();markProg('timed30_'+clefKey(),G.score);const nb=classBest();
+    const prev=G.myBest;const cb=classBest();markProg(tkey(),G.score);const nb=classBest();
     const sub=(G.score>prev&&prev>0?`打破自己的紀錄（原本 ${prev} 個）！`:G.score>prev?'第一次的紀錄！':`我的最高紀錄：${prev} 個`)+(nb.name&&CUR&&nb.name===CUR.name&&G.score>cb.v&&cb.v>0?'　也是全班第一名！':'');
-    win(G.score>=12?3:G.score>=7?2:1,`30 秒答對 ${G.score} 個！`,sub,{rank:true});}},1000);}
+    win(G.score>=12?3:G.score>=7?2:1,`30 秒答對 ${G.score} 個！`,sub,{rank:true});if(G.pendingRead){const n=G.pendingRead;G.pendingRead=null;setTimeout(()=>offerSticker('',`認音符累積答對 ${n} 題！選一張貼紙`),1800);}}},1000);}
   drawReadStars();readNext();
 }
-function myBest(){const P=(CUR&&CUR.prog)||{};return P['timed30_'+clefKey()]||0;}
-function classBest(){let v=0,name='';(DB.studs||[]).forEach(st=>{const b=(st.prog||{})['timed30_'+clefKey()]||0;if(b>v){v=b;name=st.name;}});return {v,name};}
-function rankHtml(){const k='timed30_'+clefKey();const L=(DB.studs||[]).map(st=>({n:st.name,c:st.color,v:(st.prog||{})[k]||0})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v).slice(0,5);
-  if(!L.length)return '';return '<div class="rank"><div class="tier" style="margin:0 0 4px">30 秒排行榜（'+CLEFNAMES[clefKey()]+'）</div>'+L.map((x,i)=>`<div class="rrow ${CUR&&x.n===CUR.name?'me':''}"><b>${i+1}</b><span class="av" style="background:${x.c}">${x.n.slice(0,1)}</span><span>${x.n}</span><em>${x.v} 個</em></div>`).join('')+'</div>';}
-function drawReadStars(){if(S.timed){const mb=G.myBest||0,cb=classBest();if(G.score>mb&&mb>0&&!G.broke){G.broke=true;say('破紀錄了！');popStar();}
-  info(`剩下 <b style="color:#f4845f;font-size:20px;margin:0 3px">${G.left}</b> 秒　答對 <b style="font-size:20px;margin:0 3px">${G.score}</b> 個　<span class="recp ${G.score>mb&&mb>0?'hot':''}">我的紀錄 ${Math.max(mb,G.score>mb&&mb>0?G.score:mb)}</span>`+(cb.v?`<span class="recp">全班第一 ${cb.name} ${cb.v}</span>`:''));return;}info(Array.from({length:10},(_,i)=>`<span style="opacity:${i<G.score?1:.18};display:flex">${starSvg()}</span>`).join(''));}
+function tkey(){return 'timed30_'+clefKey()+(S.dyad?'_2':'');}
+const READ_GOAL=30;
+function readReward(){if(!CUR)return;CUR.prog=CUR.prog||{};const n=(CUR.prog.readCount||0)+1;CUR.prog.readCount=n;saveDB();
+  if(n%READ_GOAL===0)setTimeout(()=>{if(G.timer&&G.left>0){G.pendingRead=n;}else offerSticker('',`認音符累積答對 ${n} 題！選一張貼紙`);},1200);}
+function myBest(){const P=(CUR&&CUR.prog)||{};return P[tkey()]||0;}
+function classBest(){let v=0,name='';(DB.studs||[]).forEach(st=>{const b=(st.prog||{})[tkey()]||0;if(b>v){v=b;name=st.name;}});return {v,name};}
+function rankHtml(){const k=tkey();const L=(DB.studs||[]).map(st=>({n:st.name,c:st.color,v:(st.prog||{})[k]||0})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v).slice(0,5);
+  if(!L.length)return '';return '<div class="rank"><div class="tier" style="margin:0 0 4px">30 秒'+(S.dyad?'雙音':'')+'排行榜（'+CLEFNAMES[clefKey()]+'）</div>'+L.map((x,i)=>`<div class="rrow ${CUR&&x.n===CUR.name?'me':''}"><b>${i+1}</b><span class="av" style="background:${x.c}">${x.n.slice(0,1)}</span><span>${x.n}</span><em>${x.v} 個</em></div>`).join('')+'</div>';}
+function drawReadStars(){const rc=(CUR&&CUR.prog&&CUR.prog.readCount)||0;const toGo=READ_GOAL-rc%READ_GOAL;const goal=`<span class="recp">再答對 ${toGo} 題拿貼紙</span>`;if(S.timed){const mb=G.myBest||0,cb=classBest();if(G.score>mb&&mb>0&&!G.broke){G.broke=true;say('破紀錄了！');popStar();}
+  info(`剩下 <b style="color:#f4845f;font-size:20px;margin:0 3px">${G.left}</b> 秒　答對 <b style="font-size:20px;margin:0 3px">${G.score}</b> 個　<span class="recp ${G.score>mb&&mb>0?'hot':''}">我的紀錄 ${Math.max(mb,G.score>mb&&mb>0?G.score:mb)}</span>`+(cb.v?`<span class="recp">全班第一 ${cb.name} ${cb.v}</span>`:''));return;}info(Array.from({length:10},(_,i)=>`<span style="opacity:${i<G.score?1:.18};display:flex">${starSvg()}</span>`).join('')+(CUR?goal:''));}
 function readNext(){
   const L=levels();const pool=S.timed?L[L.length-1].idx:L[S.lv].idx;let d;do{d=pool[Math.floor(Math.random()*pool.length)];}while(pool.length>1&&d===G.last);
   const c=clefKey();const staff=c==='bass'?'b':c==='treble'?'t':(d>7?'t':d<7?'b':(Math.random()<.5?'t':'b'));
-  G.last=d;G.target={d,staff};G.wrong=0;G.busy=false;clearKeys();$('name').textContent='';if(!S.timed||G.score>0)say('這是哪一個音？');
-  drawRead('new');if(S.autoSnd&&sfxOn())setTimeout(()=>tone(midiOf(d),0,1.2,.3),300);
+  let d2=null;if(S.timed&&S.dyad){const cand=pool.filter(x=>Math.abs(x-d)>=2&&Math.abs(x-d)<=4&&(c!=='grand'||(x>=7)===(d>=7)));if(cand.length)d2=cand[Math.floor(Math.random()*cand.length)];}
+  const st2=c==='grand'&&d2!=null?(d>=7?'t':'b'):staff;
+  G.last=d;G.target={d,d2,staff:st2};G.got=new Set();G.wrong=0;G.busy=false;clearKeys();$('name').textContent='';if(!S.timed||G.score>0)say(d2!=null?'兩個音一起彈！':'這是哪一個音？');
+  drawRead('new');if(S.autoSnd&&sfxOn())setTimeout(()=>{tone(midiOf(d),0,1.2,.3);if(d2!=null)tone(midiOf(d2),0,1.2,.3);},300);
 }
 function fitView(svg,wrap,w0,y0,h0){const cw=Math.max(1,wrap.clientWidth),ch=Math.max(1,wrap.clientHeight),sc=Math.min(ch/h0,cw/w0),W=cw/sc,H=ch/sc;svg.setAttribute('viewBox',`${-(W-w0)/2} ${y0-(H-h0)/2} ${W} ${H}`);return{W,H};}
 function drawRead(state){
@@ -637,19 +643,27 @@ function drawRead(state){
   if(grand){el('line',{x1:8,x2:8,y1:60,y2:270,stroke:'#5b4a36','stroke-width':2},svg);}
   drawClefs(svg,14);
   if(!G.target)return;const t=G.target;const ly=localY(t.d,t.staff),oy=staffOff(t.staff);
-  const g=drawNoteY(svg,250,ly,oy,1,state==='ok'?'#43b97f':dColor(t.d));
+  let g;if(t.d2!=null){const ly2=localY(t.d2,t.staff);const up=(ly+ly2)/2>100;const tip=up?Math.min(ly,ly2)-68:Math.max(ly,ly2)+68;g=el('g',{},svg);
+    [[t.d,ly],[t.d2,ly2]].forEach(([dd,yy])=>drawNoteY(g,250,yy,oy,1,state==='ok'||G.got&&G.got.has(dd)?'#43b97f':dColor(dd),{up,stemLen:Math.abs(yy-tip)}));}
+  else g=drawNoteY(svg,250,ly,oy,1,state==='ok'?'#43b97f':dColor(t.d));
   if(state==='ok')addStar(svg,292,ly+oy-22,30);
   if(state==='new')g.animate([{opacity:0,transform:'translateY(-14px)'},{opacity:1,transform:'none'}],{duration:350,easing:'ease-out'});
 }
 function readInput(m,src){
   if(!G.target||G.busy)return;const d=G.target.d;
-  if(same(m,midiOf(d),src)){
+  if(G.target.d2!=null){const hit=[G.target.d,G.target.d2].find(x=>!G.got.has(x)&&same(m,midiOf(x),src));
+    if(hit!=null){G.got.add(hit);const k=keyEls[midiOf(hit)];if(k)k.classList.add('ok');if(G.got.size<2){drawRead('');say('還有一個音！');return;}}
+    else if([G.target.d,G.target.d2].some(x=>G.got.has(x)&&same(m,midiOf(x),src)))return;
+    else{G.wrong++;flashKey(m,'bad',400);mood('oops');say(TRY[Math.min(G.wrong-1,2)]);return;}}
+  if(G.target.d2!=null||same(m,midiOf(d),src)){
     G.busy=true;G.score++;const k=keyEls[midiOf(d)];if(k){k.classList.add('ok');k.classList.remove('hint');}
-    drawRead('ok');$('name').textContent=nameOf(d);mood('happy');say(CHEERS[Math.floor(Math.random()*CHEERS.length)]);
+    drawRead('ok');$('name').textContent=G.target.d2!=null?nameOf(Math.min(d,G.target.d2))+'＋'+nameOf(Math.max(d,G.target.d2)):nameOf(d);readReward();mood('happy');say(CHEERS[Math.floor(Math.random()*CHEERS.length)]);
     popStar(S.kbd?k:null);happy();drawReadStars();
     if(S.timed){setTimeout(()=>{if(S.mode==='read'&&G.left>0)readNext();},550);return;}
     const more=S.lv<levels().length-1;
+    const firstClear=G.score>=10&&!(CUR&&CUR.prog&&CUR.prog['read_'+clefKey()+'_'+S.lv]);
     if(G.score>=10)markProg('read_'+clefKey()+'_'+S.lv,1);
+    if(firstClear&&CUR)setTimeout(()=>offerSticker('',`認音符「${CLEFNAMES[clefKey()]} ${levels()[S.lv].name}」第一次過關！選一張貼紙`),2600);
     if(G.score>=10)setTimeout(()=>S.mode==='read'&&win(3,'拿到 10 顆星星！',more?'要挑戰下一關嗎？':'這一組全部都會讀了！',{next:more}),1100);
     else setTimeout(()=>{if(S.mode==='read')readNext();},1400);
   }else{
@@ -797,7 +811,7 @@ function highlightPractice(){
 }
 function practiceInput(m,src){
   if(G.demoRun)return;
-  if(src!=='kbd'&&src!=='key'&&performance.now()-(G.advT||0)<300)return;
+  if(src!=='kbd'&&src!=='key'&&performance.now()-(G.advT||0)<90)return;
   const so=curSong();if(G.idx>=G.ev.length)return;const ev=G.ev[G.idx];
   const hit=ev.idx.find(i=>!G.got.has(i)&&same(m,midiOf(so.notes[i].d),src));
   if(hit!=null){
@@ -942,16 +956,16 @@ try{if(navigator.requestMIDIAccess)navigator.requestMIDIAccess().then(acc=>{cons
 const mic={on:false};
 const SOLFA=['Do','Do#','Re','Re#','Mi','Fa','Fa#','Sol','Sol#','La','La#','Si'];
 function autoCorr(buf,sr){
-  let n=buf.length,rms=0;for(let i=0;i<n;i++)rms+=buf[i]*buf[i];rms=Math.sqrt(rms/n);
+  const N=buf.length;let rms=0;for(let i=0;i<N;i++)rms+=buf[i]*buf[i];rms=Math.sqrt(rms/N);
+  let rr=0;for(let i=N-512;i<N;i++)rr+=buf[i]*buf[i];mic.recent=Math.sqrt(rr/512);
   if(rms<.006)return[-1,rms];
-  let r1=0,r2=n-1;const th=.2;for(let i=0;i<n/2;i++)if(Math.abs(buf[i])<th){r1=i;break;}for(let i=1;i<n/2;i++)if(Math.abs(buf[n-i])<th){r2=n-i;break;}
-  const b=buf.slice(r1,r2);n=b.length;if(n<256)return[-1,rms];
-  const c=new Float32Array(n);const maxLag=Math.min(n,Math.floor(sr/70));
-  for(let l=0;l<maxLag;l++){let s=0;for(let i=0;i<n-l;i++)s+=b[i]*b[i+l];c[l]=s;}
-  let d=0;while(d<maxLag-1&&c[d]>c[d+1])d++;
-  let mv=-1,mp=-1;for(let i=d;i<maxLag;i++)if(c[i]>mv){mv=c[i];mp=i;}
-  if(mp<=0||mv/c[0]<.55)return[-1,rms];
-  const x1=c[mp-1]||0,x2=c[mp],x3=c[mp+1]||0,a=(x1+x3-2*x2)/2,bb=(x3-x1)/2;let T=mp;if(a)T=mp-bb/(2*a);
+  const W=768,minT=Math.floor(sr/1150),maxT=Math.min(N-W-1,Math.floor(sr/62));const d=mic.yd&&mic.yd.length===maxT+2?mic.yd:(mic.yd=new Float32Array(maxT+2));
+  d[0]=1;let run=0;let found=-1;
+  for(let t=1;t<=maxT;t++){let s=0;for(let j=0;j<W;j++){const x=buf[j]-buf[j+t];s+=x*x;}run+=s;d[t]=run?s*t/run:1;}
+  for(let t=minT;t<maxT;t++){if(d[t]<.15){while(t+1<maxT&&d[t+1]<d[t])t++;found=t;break;}}
+  if(found<0){let mv=1,mp=-1;for(let t=minT;t<maxT;t++)if(d[t]<mv){mv=d[t];mp=t;}if(mv<.3)found=mp;}
+  if(found<0)return[-1,rms];
+  const x1=d[found-1],x2=d[found],x3=d[found+1];const a=(x1+x3-2*x2)/2,b=(x3-x1)/2;const T=a?found-b/(2*a):found;
   return[sr/T,rms];
 }
 async function micStart(){
@@ -971,19 +985,18 @@ function micLoop(){
   if(!mic.on)return;mic.an.getFloatTimeDomainData(mic.buf);
   const[f,rms]=autoCorr(mic.buf,ac.sampleRate);
   $('lvl').style.width=Math.min(100,rms*600)+'%';
-  mic.hist.push(rms);if(mic.hist.length>8)mic.hist.shift();
+  const rc=mic.recent||rms;mic.hist.push(rc);if(mic.hist.length>6)mic.hist.shift();
   const minR=Math.min(...mic.hist.slice(0,-1));
-  const now=ac.currentTime;
-  mic.peak=Math.max(mic.peak||0,rms);mic.trough=Math.min(mic.trough==null?rms:mic.trough,rms);
-  const gap=now-(mic.lastT||0);
-  if(rms>.02&&rms>minR*2.5&&gap>.25&&(mic.lastT==null||mic.lastT===0||mic.trough<mic.peak*.55)&&rms>mic.trough*2){mic.armed=true;}
-  if(S.mode==='rhythm'){if(mic.armed&&rms>.03){mic.armed=false;mic.lastT=now;mic.peak=rms;mic.trough=rms;input(71,'mic');}mic.raf=requestAnimationFrame(micLoop);return;}
+  const now=ac.currentTime;const gap=now-(mic.lastT||0);
+  if(rc>.018&&rc>minR*1.6&&gap>.1){mic.armed=true;mic.armT=now;}
+  if(mic.armed&&now-mic.armT>.35)mic.armed=false;
+  if(S.mode==='rhythm'){if(mic.armed&&rc>.03){mic.armed=false;mic.lastT=now;input(71,'mic');}mic.raf=requestAnimationFrame(micLoop);return;}
   let m=-1;if(f>60&&f<1150)m=Math.round(69+12*Math.log2(f/440));
   if(m>0&&m===mic.cand)mic.cnt++;else{mic.cand=m;mic.cnt=1;}
   if(performance.now()-(G.kbdT||0)<600){mic.raf=requestAnimationFrame(micLoop);return;}
   const newPc=mic.lastEmit==null||((m-mic.lastEmit)%12+12)%12!==0;
-  if(m>0&&mic.cnt>=3&&(mic.armed||(newPc&&gap>.15))){
-    mic.armed=false;mic.lastT=now;mic.peak=rms;mic.trough=rms;mic.lastEmit=m;$('heard').textContent=SOLFA[m%12];input(m,'mic');
+  if(m>0&&mic.cnt>=2&&(mic.armed||(newPc&&gap>.12))){
+    mic.armed=false;mic.lastT=now;mic.lastEmit=m;$('heard').textContent=SOLFA[m%12];input(m,'mic');
   }
   if(rms<.006){mic.lastEmit=null;}
   mic.raf=requestAnimationFrame(micLoop);
@@ -1117,12 +1130,12 @@ const ANIM={'交通工具':'a-drive','天空':'a-float','花園':'a-jelly','恐�
 const SND={'交通工具':[[67,0],[71,.12],[74,.24]],'天空':[[72,0],[79,.2],[84,.4]],'花園':[[76,0],[79,.12],[84,.24]],'恐龍':[[48,0],[48,.25],[43,.5]],'車車':[[67,0],[64,.12],[67,.24],[64,.36]],'動物':[[72,0],[76,.1],[79,.2]],'音樂':[[60,0],[64,.12],[67,.24],[72,.36]],'美食':[[76,0],[74,.1],[72,.2],[79,.32]],'大自然':[[72,0],[79,.2],[84,.4]],'寶物':[[79,0],[84,.1],[88,.2],[91,.3]]};
 function showSticker(i,song){const c=catOf(i);$('svBox').innerHTML=stickerSvg(i);$('svBox').className='svbox '+ANIM[c];$('svName').textContent=STK[i][0];$('svSub').textContent=song?`${c}・〈${song}〉拿到的`:c;$('stkView').classList.remove('hide');playStk(c);}
 function playStk(c){if(!sfxOn())return;(SND[c]||SND['寶物']).forEach(([m,t])=>tone(m,t,.4,.22));}
-function offerSticker(song){if(!CUR)return;CUR.stickers=CUR.stickers||[];const own=new Set(CUR.stickers.map(x=>x.i));
+function offerSticker(song,msg){if(!CUR)return;CUR.stickers=CUR.stickers||[];const own=new Set(CUR.stickers.map(x=>x.i));
   let pool=STK.map((_,i)=>i).filter(i=>!own.has(i));if(pool.length<3)pool=STK.map((_,i)=>i);
   const pick3=[];while(pick3.length<3){const i=pool[Math.floor(Math.random()*pool.length)];if(!pick3.includes(i))pick3.push(i);}
-  $('stkSong').textContent=`〈${song}〉拿到三顆星！選一張你喜歡的貼紙`;
+  $('stkSong').textContent=msg||`〈${song}〉拿到三顆星！選一張你喜歡的貼紙`;
   $('stkChoices').innerHTML=pick3.map(i=>`<button class="stkc" data-i="${i}">${stickerSvg(i)}<b>${STK[i][0]}</b></button>`).join('');
-  $('stkChoices').querySelectorAll('.stkc').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;CUR.stickers.push({i,song,d:new Date().toISOString().slice(0,10)});saveDB();if(G.sess)G.sess.gains.push(`貼紙「${STK[i][0]}」`);
+  $('stkChoices').querySelectorAll('.stkc').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;CUR.stickers.push({i,song:song||'認音符',d:new Date().toISOString().slice(0,10)});saveDB();if(G.sess)G.sess.gains.push(`貼紙「${STK[i][0]}」`);
     $('stkChoices').innerHTML=`<div class="stkc big1">${stickerSvg(i)}<b>${STK[i][0]}</b></div>`;$('stkSong').textContent='貼進貼紙簿了！';setTimeout(()=>$('sticker').classList.add('hide'),1600);});
   $('sticker').classList.remove('hide');setTimeout(()=>{fanfare();confetti();},150);}
 const CATS=[['恐龍','#2f8f5b',[30,31,32,33,34,35]],['車車','#d9483b',[23,36,37,38,39,43]],['交通工具','#3b6fc4',[41,40,42,22,44,45]],['動物','#c9603e',[1,18,19,20,21,24]],['音樂','#5b5bd6',[0,2,6,7,46,47]],['美食','#c24ccf',[14,15,16,25,26,27]],['天空','#0f8fb3',[4,12,13,9,11,29]],['花園','#30a46c',[5,28,48,49,50,51]],['寶物','#d68c00',[3,8,10,17,52,53]]];
