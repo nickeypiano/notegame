@@ -618,7 +618,7 @@ function readSetup(){
   drawReadStars();readNext();
 }
 function tkey(){return 'timed30_'+clefKey()+(S.dyad?'_2':'');}
-const READ_GOAL=30;
+const READ_GOAL=50;
 function readReward(){if(!CUR)return;CUR.prog=CUR.prog||{};const n=(CUR.prog.readCount||0)+1;CUR.prog.readCount=n;saveDB();
   if(n%READ_GOAL===0)setTimeout(()=>{if(G.timer&&G.left>0){G.pendingRead=n;}else offerSticker('',`認音符累積答對 ${n} 題！選一張貼紙`);},1200);}
 function myBest(){const P=(CUR&&CUR.prog)||{};return P[tkey()]||0;}
@@ -663,7 +663,6 @@ function readInput(m,src){
     const more=S.lv<levels().length-1;
     const firstClear=G.score>=10&&!(CUR&&CUR.prog&&CUR.prog['read_'+clefKey()+'_'+S.lv]);
     if(G.score>=10)markProg('read_'+clefKey()+'_'+S.lv,1);
-    if(firstClear&&CUR)setTimeout(()=>offerSticker('',`認音符「${CLEFNAMES[clefKey()]} ${levels()[S.lv].name}」第一次過關！選一張貼紙`),2600);
     if(G.score>=10)setTimeout(()=>S.mode==='read'&&win(3,'拿到 10 顆星星！',more?'要挑戰下一關嗎？':'這一組全部都會讀了！',{next:more}),1100);
     else setTimeout(()=>{if(S.mode==='read')readNext();},1400);
   }else{
