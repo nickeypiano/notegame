@@ -632,6 +632,7 @@ function readNext(){
   const c=clefKey();const staff=c==='bass'?'b':c==='treble'?'t':(d>7?'t':d<7?'b':(Math.random()<.5?'t':'b'));
   let d2=null;if(S.timed&&S.dyad){const cand=pool.filter(x=>Math.abs(x-d)>=2&&Math.abs(x-d)<=4&&(c!=='grand'||(x>=7)===(d>=7)));if(cand.length)d2=cand[Math.floor(Math.random()*cand.length)];}
   const st2=c==='grand'&&d2!=null?(d>=7?'t':'b'):staff;
+  G.qT=ac?ac.currentTime:0;G.dyMin={};
   G.last=d;G.target={d,d2,staff:st2};G.got=new Set();G.wrong=0;G.busy=false;clearKeys();$('name').textContent='';if(!S.timed||G.score>0)say(d2!=null?'兩個音一起彈！':'這是哪一個音？');
   drawRead('new');if(S.autoSnd&&sfxOn())setTimeout(()=>{tone(midiOf(d),0,1.2,.3);if(d2!=null)tone(midiOf(d2),0,1.2,.3);},300);
 }
@@ -984,8 +985,12 @@ function bandPeak(f){const bw=ac.sampleRate/8192;const fb=mic.fbuf;const lo=Math
   if(pi<0)return[-200,0];const a=fb[pi-1],b=fb[pi],c=fb[pi+1];const off=(a-c)/(2*(a-2*b+c)||1);const fr=(pi+off)*bw;if(Math.abs(12*Math.log2(fr/f))>.35)return[-200,0];
   const j0=Math.max(1,Math.floor(f*.85/bw)),j1=Math.ceil(f*1.15/bw);const arr=[];for(let i=j0;i<=j1;i++)if(Math.abs(i-pi)>3)arr.push(fb[i]);arr.sort((x,y)=>x-y);return [pk,arr[Math.floor(arr.length/2)]||-200];}
 function checkDyad(){mic.fan.getFloatFrequencyData(mic.fbuf);let mx=-200;for(let i=5;i<1200;i++)if(mic.fbuf[i]>mx)mx=mic.fbuf[i];
-  const t=G.target;const ok=[t.d,t.d2].every(d=>{const f=440*Math.pow(2,(midiOf(d)-69)/12);const [p1,f1]=bandPeak(f);const [p2,f2]=bandPeak(f*2);return (p1-f1>12&&p1>mx-28)||(p2-f2>14&&p2>mx-24);});
-  mic.dyOk=ok?mic.dyOk+1:0;
+  const t=G.target;G.dyMin=G.dyMin||{};
+  const ok=[t.d,t.d2].map(d=>{const f=440*Math.pow(2,(midiOf(d)-69)/12);const [p1,f1]=bandPeak(f);const [p2,f2]=bandPeak(f*2);
+    const there=(p1-f1>12&&p1>mx-28)||(p2-f2>14&&p2>mx-24);const lv=Math.max(p1,p2-4);const mn=G.dyMin[d]==null?lv:Math.min(G.dyMin[d],lv);G.dyMin[d]=mn;
+    return there&&lv-mn>=8;}).every(x=>x);
+  const fresh=(mic.onsetT||0)>(G.qT||0)+.05&&ac.currentTime-(mic.onsetT||0)<.4;
+  mic.dyOk=ok&&fresh?mic.dyOk+1:0;
   if(mic.dyOk>=2){mic.dyOk=0;mic.lastT=ac.currentTime;mic.armed=false;$('heard').textContent=nameOf(Math.min(t.d,t.d2))+'＋'+nameOf(Math.max(t.d,t.d2));G.got=new Set([t.d]);readInput(midiOf(t.d2),'mic');}}
 function micStop(){mic.on=false;if(mic.stream)mic.stream.getTracks().forEach(t=>t.stop());cancelAnimationFrame(mic.raf);$('micBtn').classList.remove('live');$('micinfo').classList.remove('on');$('listen').style.display='';}
 function micLoop(){
@@ -995,6 +1000,7 @@ function micLoop(){
   const rc=mic.recent||rms;mic.hist.push(rc);if(mic.hist.length>6)mic.hist.shift();
   const minR=Math.min(...mic.hist.slice(0,-1));
   const now=ac.currentTime;const gap=now-(mic.lastT||0);
+  if(rc>.018&&rc>minR*1.6){mic.onsetT=now;}
   if(rc>.018&&rc>minR*1.6&&gap>.1){mic.armed=true;mic.armT=now;}
   if(mic.armed&&now-mic.armT>.35)mic.armed=false;
   if(S.mode==='read'&&G.target&&G.target.d2!=null&&!G.busy&&rc>.012)checkDyad();
@@ -1003,6 +1009,7 @@ function micLoop(){
   if(m>0&&m===mic.cand)mic.cnt++;else{mic.cand=m;mic.cnt=1;}
   if(performance.now()-(G.kbdT||0)<600){mic.raf=requestAnimationFrame(micLoop);return;}
   const newPc=mic.lastEmit==null||((m-mic.lastEmit)%12+12)%12!==0;
+  if(S.mode==='read'&&G.target&&G.target.d2!=null&&(mic.onsetT||0)<(G.qT||0)+.05){mic.raf=requestAnimationFrame(micLoop);return;}
   if(m>0&&mic.cnt>=2&&(mic.armed||(newPc&&gap>.12))){
     mic.armed=false;mic.lastT=now;mic.lastEmit=m;$('heard').textContent=SOLFA[m%12];input(m,'mic');
   }
