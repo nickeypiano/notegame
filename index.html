@@ -294,9 +294,6 @@ html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscro
     <div class="t">顏色提示（音符和琴鍵同色）</div><div class="row" id="colRow"><button class="chip" data-v="1">開</button><button class="chip" data-v="0">關</button></div>
     <div class="t">認音符時先播放聲音</div><div class="row" id="sndRow"><button class="chip" data-v="1">開</button><button class="chip" data-v="0">關</button></div>
     <div class="t">演奏時一起播旋律（用麥克風時會自動關閉）</div><div class="row" id="melRow"><button class="chip" data-v="1">開</button><button class="chip" data-v="0">關</button></div>
-    <div class="t">演奏和示範時加上伴奏</div><div class="row" id="accRow"><button class="chip" data-v="1">開</button><button class="chip" data-v="0">關</button></div>
-    <div class="t">伴奏音量</div><div class="row" id="accVolRow"><button class="chip" data-v="0">小</button><button class="chip" data-v="1">中</button><button class="chip" data-v="2">大</button></div>
-    <div class="t">用麥克風彈真鋼琴時也要伴奏（請戴耳機，或把喇叭放遠一點）</div><div class="row" id="accMicRow"><button class="chip" data-v="1">要</button><button class="chip" data-v="0">不要</button></div>
     <div class="t">節拍器</div><div class="row" id="metRow"><button class="chip" data-v="1">開</button><button class="chip" data-v="0">關</button></div>
   </div>
   <button class="btn" id="closeSet">好了</button>
@@ -373,6 +370,8 @@ html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscro
     <div id="tlist"></div>
     <div class="t">每堂課可以玩</div>
     <div class="row" id="minRow"><button class="chip" data-v="3">3 分鐘</button><button class="chip" data-v="5">5 分鐘</button><button class="chip" data-v="10">10 分鐘</button><button class="chip" data-v="0">不限時</button></div>
+    <div class="t">每位學生一天最多拿幾張貼紙（超過的會留到下次上課再給）</div>
+    <div class="row" id="capRow"><button class="chip" data-v="1">1 張</button><button class="chip" data-v="2">2 張</button><button class="chip" data-v="3">3 張</button><button class="chip" data-v="0">不限</button></div>
     <div class="t">修改老師密碼（4 位數字）</div>
     <div class="row"><input id="newPin" inputmode="numeric" maxlength="4" placeholder="新密碼"><button class="chip" id="savePin">儲存</button></div>
     <div class="t">備份／換裝置</div>
@@ -838,7 +837,7 @@ function harmony(so){const m=so.meter||4;const bars=Math.ceil(so.total/m);const 
   return out;}
 function accTone(m,t,dur,vol,dest){const a=audio();const o=a.createOscillator(),o2=a.createOscillator(),g=a.createGain();o.type='sine';o2.type='triangle';o.frequency.value=freq(m);o2.frequency.value=freq(m)*2;
   const g2=a.createGain();g2.gain.value=.15;o2.connect(g2);g2.connect(g);o.connect(g);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.02);g.gain.exponentialRampToValueAtTime(.001,t+dur);g.connect(dest);o.start(t);o2.start(t);o.stop(t+dur+.05);o2.stop(t+dur+.05);}
-function accOn(so){return S.acc!==false&&(!mic.on||S.accMic)&&!so.rhythm&&!so.grand;}
+function accOn(so){return false;}
 let accTimer=null,accQ=[];
 function accLight(m,t,dur,vol,dest){const a=audio();const o=a.createOscillator(),g=a.createGain();o.type='triangle';o.frequency.value=freq(m);g.gain.setValueAtTime(0,t);g.gain.linearRampToValueAtTime(vol,t+.015);g.gain.exponentialRampToValueAtTime(.001,t+dur);o.connect(g);g.connect(dest);o.start(t);o.stop(t+dur+.05);}
 function accStop(){clearInterval(accTimer);accTimer=null;accQ=[];}
@@ -937,9 +936,6 @@ chipRow('labRow',()=>S.lab,v=>S.lab=v);
 chipRow('colRow',()=>S.color?'1':'0',v=>S.color=v==='1');
 chipRow('sndRow',()=>S.autoSnd?'1':'0',v=>S.autoSnd=v==='1');
 chipRow('melRow',()=>S.mel?'1':'0',v=>S.mel=v==='1');
-chipRow('accRow',()=>S.acc!==false?'1':'0',v=>S.acc=v==='1');
-chipRow('accVolRow',()=>String(S.accVol==null?1:S.accVol),v=>S.accVol=+v);
-chipRow('accMicRow',()=>S.accMic?'1':'0',v=>{S.accMic=v==='1';if(mic.on){micStop();toast('麥克風設定改了，請再按一次麥克風');}});
 chipRow('metRow',()=>S.met?'1':'0',v=>S.met=v==='1');
 $('gear').onclick=()=>askPin(()=>{stopPerform(true);$('kbdRow').sync();$('settings').classList.remove('hide');});
 $('closeSet').onclick=()=>{$('settings').classList.add('hide');if(G.dirty){G.dirty=false;refreshKeys();if(S.mode==='read')drawRead('');else enterMode(S.mode);}};
@@ -972,7 +968,7 @@ async function micStart(){
   audio();
   try{
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error('none');
-    const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:!!S.accMic,noiseSuppression:false,autoGainControl:false}});
+    const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
     mic.stream=stream;mic.src=ac.createMediaStreamSource(stream);mic.an=ac.createAnalyser();mic.an.fftSize=2048;mic.src.connect(mic.an);
     mic.buf=new Float32Array(mic.an.fftSize);mic.fan=ac.createAnalyser();mic.fan.fftSize=8192;mic.fan.smoothingTimeConstant=0;mic.src.connect(mic.fan);mic.fbuf=new Float32Array(4096);mic.dyOk=0;mic.on=true;mic.hist=[];mic.cand=-1;mic.cnt=0;mic.lastEmit=null;mic.armed=false;
     $('micBtn').classList.add('live');$('micinfo').classList.add('on');$('listen').style.display='none';
@@ -1048,7 +1044,8 @@ function showPicker(){
 $('pickTeacher').onclick=()=>askPin(showTeacher);
 $('pickGuest').onclick=()=>{startSession({id:'guest',guest:true,name:'訪客',color:'#8d6e63',prog:{unlockAll:true},stickers:[]});};
 function startSession(st){CUR=st;$('studBtn').title=st.guest?'點這裡換人':'';audio();G.sess={gains:[],left:DB.minutes*60};updStud();$('picker').classList.add('hide');
-  say(`${st.name}，一起來玩吧！`);enterMode(S.mode);clearInterval(G.clockT);G.clockT=setInterval(tick,1000);tick();}
+  say(`${st.name}，一起來玩吧！`);enterMode(S.mode);
+  if(!st.guest&&st.prog&&st.prog.stkPending>0&&(!capN()||todayCount()<capN())){st.prog.stkPending--;saveDB();setTimeout(()=>offerSticker('上次存的','上次存起來的貼紙，現在可以選囉！'),900);}clearInterval(G.clockT);G.clockT=setInterval(tick,1000);tick();}
 function tick(){if(!G.sess)return;const c=$('clock');
   if(!DB.minutes||(CUR&&CUR.guest)){c.style.display='none';return;}c.style.display='';
   const busy=['ended','settings','teacher','pin','songs','album','sticker','bookOv','stkView','rhySetOv'].some(id=>!$(id).classList.contains('hide'));
@@ -1145,12 +1142,16 @@ const ANIM={'交通工具':'a-drive','天空':'a-float','花園':'a-jelly','恐�
 const SND={'交通工具':[[67,0],[71,.12],[74,.24]],'天空':[[72,0],[79,.2],[84,.4]],'花園':[[76,0],[79,.12],[84,.24]],'恐龍':[[48,0],[48,.25],[43,.5]],'車車':[[67,0],[64,.12],[67,.24],[64,.36]],'動物':[[72,0],[76,.1],[79,.2]],'音樂':[[60,0],[64,.12],[67,.24],[72,.36]],'美食':[[76,0],[74,.1],[72,.2],[79,.32]],'大自然':[[72,0],[79,.2],[84,.4]],'寶物':[[79,0],[84,.1],[88,.2],[91,.3]]};
 function showSticker(i,song){const c=catOf(i);$('svBox').innerHTML=stickerSvg(i);$('svBox').className='svbox '+ANIM[c];$('svName').textContent=STK[i][0];$('svSub').textContent=song?`${c}・〈${song}〉拿到的`:c;$('stkView').classList.remove('hide');playStk(c);}
 function playStk(c){if(!sfxOn())return;(SND[c]||SND['寶物']).forEach(([m,t])=>tone(m,t,.4,.22));}
-function offerSticker(song,msg){if(!CUR)return;CUR.stickers=CUR.stickers||[];const own=new Set(CUR.stickers.map(x=>x.i));
+function capN(){return DB.cap==null?2:DB.cap;}
+function todayKey(){return new Date().toLocaleDateString('sv');}
+function todayCount(){return (CUR.stickers||[]).filter(x=>x.d===todayKey()).length;}
+function offerSticker(song,msg){if(!CUR)return;
+  if(!CUR.guest&&capN()&&todayCount()>=capN()){CUR.prog=CUR.prog||{};CUR.prog.stkPending=(CUR.prog.stkPending||0)+1;saveDB();toast('今天的貼紙已經拿滿囉！這張先幫你存起來，下次上課再選',4500);return;}CUR.stickers=CUR.stickers||[];const own=new Set(CUR.stickers.map(x=>x.i));
   let pool=STK.map((_,i)=>i).filter(i=>!own.has(i));if(pool.length<3)pool=STK.map((_,i)=>i);
   const pick3=[];while(pick3.length<3){const i=pool[Math.floor(Math.random()*pool.length)];if(!pick3.includes(i))pick3.push(i);}
   $('stkSong').textContent=msg||`〈${song}〉拿到三顆星！選一張你喜歡的貼紙`;
   $('stkChoices').innerHTML=pick3.map(i=>`<button class="stkc" data-i="${i}">${stickerSvg(i)}<b>${STK[i][0]}</b></button>`).join('');
-  $('stkChoices').querySelectorAll('.stkc').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;CUR.stickers.push({i,song:song||'認音符',d:new Date().toISOString().slice(0,10)});saveDB();if(G.sess)G.sess.gains.push(`貼紙「${STK[i][0]}」`);
+  $('stkChoices').querySelectorAll('.stkc').forEach(b=>b.onclick=()=>{const i=+b.dataset.i;CUR.stickers.push({i,song:song||'認音符',d:todayKey()});saveDB();if(G.sess)G.sess.gains.push(`貼紙「${STK[i][0]}」`);
     $('stkChoices').innerHTML=`<div class="stkc big1">${stickerSvg(i)}<b>${STK[i][0]}</b></div>`;$('stkSong').textContent='貼進貼紙簿了！';setTimeout(()=>$('sticker').classList.add('hide'),1600);});
   $('sticker').classList.remove('hide');setTimeout(()=>{fanfare();confetti();},150);}
 const CATS=[['恐龍','#2f8f5b',[30,31,32,33,34,35]],['車車','#d9483b',[23,36,37,38,39,43]],['交通工具','#3b6fc4',[41,40,42,22,44,45]],['動物','#c9603e',[1,18,19,20,21,24]],['音樂','#5b5bd6',[0,2,6,7,46,47]],['美食','#c24ccf',[14,15,16,25,26,27]],['天空','#0f8fb3',[4,12,13,9,11,29]],['花園','#30a46c',[5,28,48,49,50,51]],['寶物','#d68c00',[3,8,10,17,52,53]]];
@@ -1194,6 +1195,7 @@ function drawTeacher(){
     <div class="det" id="det${i}" style="display:none"></div></div>`;}).join(''):'<div class="note">還沒有學生</div>';
   $('tlist').querySelectorAll('[data-a]').forEach(b=>b.onclick=()=>tAction(b.dataset.a,+b.dataset.i,b));
   $('minRow').querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',+c.dataset.v===DB.minutes));
+  $('capRow').querySelectorAll('.chip').forEach(c=>c.classList.toggle('on',+c.dataset.v===capN()));
 }
 function inlineAsk(btn,ph,cb,type='text'){const row=btn.parentElement;if(row.querySelector('.ia'))return;const d=document.createElement('div');d.className='row ia';d.style.width='100%';
   d.innerHTML=`<input placeholder="${ph}" ${type==='num'?'inputmode="numeric"':''}><button class="chip go">確定</button><button class="chip">取消</button>`;row.appendChild(d);const inp=d.querySelector('input');inp.focus();
@@ -1206,6 +1208,7 @@ function tAction(a,i,btn){const st=DB.studs[i];
 }
 $('addStud').onclick=()=>{const v=$('newName').value.trim();if(!v)return;DB.studs.push({id:Date.now(),name:v.slice(0,8),color:AVC[DB.studs.length%AVC.length],prog:{}});saveDB();$('newName').value='';drawTeacher();};
 $('minRow').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{DB.minutes=+c.dataset.v;saveDB();drawTeacher();});
+$('capRow').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{DB.cap=+c.dataset.v;saveDB();drawTeacher();});
 $('savePin').onclick=()=>{const v=$('newPin').value;if(/^\d{4}$/.test(v)){DB.pin=v;saveDB();$('newPin').value='';toast('密碼已更新');}else toast('請輸入 4 位數字');};
 $('saveFile').onclick=()=>{const blob=new Blob([JSON.stringify(DB,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='音符找琴鍵備份-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);};
 $('loadFile').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!Array.isArray(d.studs))throw 0;DB=Object.assign({studs:[],pin:'0000',minutes:5},d);saveDB();CUR=null;drawTeacher();toast('還原完成');}catch(err){toast('這個檔案不是備份檔');}});};
