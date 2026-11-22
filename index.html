@@ -460,17 +460,18 @@ const CLEF="M20.191 93.208C20.135 92.731,20.191 92.703,20.444 92.45C24.824 88.37
 /* ---------- pitch model: d = diatonic index, C3=0 … C5=14 ---------- */
 const LETTER=['C','D','E','F','G','A','B'],SOL=['Do','Re','Mi','Fa','Sol','La','Si'],SEMI=[0,2,4,5,7,9,11];
 const DCOL=['#e5484d','#f17c2b','#e6b012','#30a46c','#0fa3c7','#5b5bd6','#c24ccf'];
-const midiOf=d=>48+12*Math.floor(d/7)+SEMI[d%7];
+const md=d=>((d%7)+7)%7;
+const midiOf=d=>48+12*Math.floor(d/7)+SEMI[md(d)];
 const dOfId=id=>LETTER.indexOf(id[0])+7*(+id.slice(1)-3);
-function nameOf(d){const c=S.mode==='rhythm'?'treble':clefKey();if(d===14)return '高Do';if(d===7&&c!=='treble')return '中央Do';if(d===0&&c==='grand')return '低Do';return SOL[d%7];}
+function nameOf(d){const c=S.mode==='rhythm'?'treble':clefKey();if(d>14)return '高'+SOL[md(d)];if(d<0)return '低'+SOL[md(d)];if(d===14)return '高Do';if(d===7&&c!=='treble')return '中央Do';if(d===0&&c==='grand')return '低Do';return SOL[md(d)];}
 const LV={
- treble:[3,4,5,6,7,8].map((n,k)=>({name:`第${k+1}關 Do～${['','','','Mi','Fa','Sol','La','Si','高Do'][n]}`,idx:Array.from({length:n},(_,x)=>7+x)})),
- bass:[3,4,5,6,7,8].map((n,k)=>({name:`第${k+1}關 ${['','','','中央Do～La','中央Do～Sol','中央Do～Fa','中央Do～Mi','中央Do～Re','中央Do～Do'][n]}`,idx:Array.from({length:n},(_,x)=>7-x)})),
+ treble:[3,4,5,6,7,8,12,15].map((n,k)=>({name:`第${k+1}關 Do～${{3:'Mi',4:'Fa',5:'Sol',6:'La',7:'Si',8:'高Do',12:'高音Sol',15:'高高Do'}[n]}`,idx:Array.from({length:n},(_,x)=>7+x)})),
+ bass:[3,4,5,6,7,8,12,15].map((n,k)=>({name:`第${k+1}關 ${{3:'中央Do～La',4:'中央Do～Sol',5:'中央Do～Fa',6:'中央Do～Mi',7:'中央Do～Re',8:'中央Do～Do',12:'中央Do～低音Fa',15:'中央Do～低低Do'}[n]}`,idx:Array.from({length:n},(_,x)=>7-x)})),
  grand:[{name:'第1關 中央Do附近',idx:[4,5,6,7,8,9,10]},{name:'第2關 兩個八度',idx:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]}]};
 function lvOpen(i){if(i===0||!CUR||CUR.guest)return true;const P=CUR.prog||{};return !!(P.unlockAll||P['readok_'+clefKey()+'_'+(i-1)]);}
 const clefKey=()=>S.clef==='bass'||S.clef==='grand'?S.clef:'treble';
 const levels=()=>LV[clefKey()];
-function kbRange(){if(S.mode==='rhythm')return[7,14];const c=clefKey();return c==='bass'?[0,7]:c==='grand'?[0,14]:[7,14];}
+function kbRange(){if(S.mode==='rhythm')return[7,14];const c=clefKey();let lo=c==='bass'?0:c==='grand'?0:7,hi=c==='bass'?7:14;if(S.mode==='read'&&!S.timed&&c!=='grand'){const pool=S.test?(c==='bass'?[-7]:[21]):(LV[c][S.lv]||LV[c][0]).idx;lo=Math.min(lo,...pool);hi=Math.max(hi,...pool);}return[lo,hi];}
 const SONGS=[
  {t:0,name:'月光下',tempo:90,s:'C4 C4 C4 D4 | E4:2 D4:2 | C4 E4 D4 D4 | C4:4 | C4 C4 C4 D4 | E4:2 D4:2 | C4 E4 D4 D4 | C4:4'},
  {t:0,name:'小蜜蜂',tempo:90,s:'G4 E4 E4:2 | F4 D4 D4:2 | C4 D4 E4 F4 | G4 G4 G4:2 | G4 E4 E4:2 | F4 D4 D4:2 | C4 E4 G4 G4 | C4:4'},
@@ -608,7 +609,7 @@ function staffLines(p,x1,x2,oy=0){for(let i=0;i<5;i++)el('line',{x1,x2,y1:60+i*2
 function drawClef(p,x,which,oy=0){el('path',{d:which==='b'?FCLEF:CLEF,fill:'#4a3b2a',transform:`translate(${x},${-100+oy}) scale(2)`},p);}
 function drawClefs(p,x){const c=clefKey();if(c==='grand'){drawClef(p,x,'t');drawClef(p,x,'b',GOFF);}else drawClef(p,x,c==='bass'?'b':'t');}
 function allLines(p,x1,x2){staffLines(p,x1,x2);if(clefKey()==='grand')staffLines(p,x1,x2,GOFF);}
-const dColor=d=>S.color?DCOL[d%7]:'#2b2117';
+const dColor=d=>S.color?DCOL[md(d)]:'#2b2117';
 /* opts: up (force dir), noFlag, rhythm */
 function drawNoteY(p,x,ly,oy,dur,color,o={}){
   const g=el('g',{style:`--c:${color}`},p);const y=ly+oy;
@@ -628,13 +629,13 @@ function addStar(p,x,y,size=28){const g=el('g',{transform:`translate(${x-size/2}
 const piano=$('piano');let keyEls={};
 function buildPiano(){piano.innerHTML='';keyEls={};const[lo,hi]=kbRange();const n=hi-lo+1;piano.classList.toggle('wide',n>8);
   for(let d=lo;d<=hi;d++){const m=midiOf(d);const k=document.createElement('div');k.className='w';k.dataset.midi=m;k.dataset.d=d;
-    k.innerHTML=`<div class="dot" style="background:${DCOL[d%7]}"></div><div class="lab"></div>`;piano.appendChild(k);keyEls[m]=k;}
-  for(let d=lo;d<hi;d++){if([2,6].includes(d%7))continue;const m=midiOf(d)+1;const k=document.createElement('div');k.className='b';k.dataset.midi=m;k.style.left=((d-lo+1)/n*100)+'%';k.style.width=(60/n)+'%';piano.appendChild(k);keyEls[m]=k;}
+    k.innerHTML=`<div class="dot" style="background:${DCOL[md(d)]}"></div><div class="lab"></div>`;piano.appendChild(k);keyEls[m]=k;}
+  for(let d=lo;d<hi;d++){if([2,6].includes(md(d)))continue;const m=midiOf(d)+1;const k=document.createElement('div');k.className='b';k.dataset.midi=m;k.style.left=((d-lo+1)/n*100)+'%';k.style.width=(60/n)+'%';piano.appendChild(k);keyEls[m]=k;}
   G.kbKey=lo+'-'+hi+S.clef;}
 function refreshKeys(){const[lo,hi]=kbRange();if(G.kbKey!==lo+'-'+hi+S.clef)buildPiano();
   piano.classList.toggle('showColor',S.color);piano.classList.toggle('hide',!S.kbd);$('kbdBtn').classList.toggle('live',S.kbd);
   const lvIdx=S.mode==='read'&&!S.timed?(levels()[S.lv]||levels()[0]).idx:null;
-  for(let d=lo;d<=hi;d++){const k=keyEls[midiOf(d)];k.querySelector('.lab').textContent=S.lab==='solfa'?nameOf(d):S.lab==='abc'?LETTER[d%7]:'';k.classList.toggle('off',!!lvIdx&&!lvIdx.includes(d));}}
+  for(let d=lo;d<=hi;d++){const k=keyEls[midiOf(d)];k.querySelector('.lab').textContent=S.lab==='solfa'?nameOf(d):S.lab==='abc'?LETTER[md(d)]:'';k.classList.toggle('off',!!lvIdx&&!lvIdx.includes(d));}}
 piano.addEventListener('pointerdown',e=>{const k=e.target.closest('.w,.b');if(!k)return;e.preventDefault();const m=+k.dataset.midi,now=performance.now();if(G.lastKey===m&&now-G.lastKeyT<120)return;G.lastKey=m;G.lastKeyT=now;G.kbdT=now;input(m,'kbd');});
 piano.addEventListener('contextmenu',e=>e.preventDefault());
 function foldKey(m){const[lo,hi]=kbRange();const a=midiOf(lo),b=midiOf(hi);while(m<a)m+=12;while(m>b)m-=12;return m;}
@@ -675,11 +676,21 @@ const same=(m,target,src)=>src==='drum'||src==='kbd'||src==='key'?m===target:m==
 /* ---------- READ mode ---------- */
 const CLEFNAMES={treble:'高音',bass:'低音',grand:'雙手'};
 function clefChips(){return `<span class="sep"></span>`+Object.keys(CLEFNAMES).map(c=>`<button class="chip ${clefKey()===c?'on':''}" data-clef="${c}">${CLEFNAMES[c]}</button>`).join('');}
+const TEST_BLOCKS=[[0,1],[2,3],[4,5],[6],[7]];
+function startTest(){S.test=true;S.timed=false;G.testI=0;G.testWrong=[0,0,0,0,0];G.testAns=0;enterMode('read');}
+function testPoolFor(i){const b=Math.floor(i/4);const lvl=TEST_BLOCKS[b][TEST_BLOCKS[b].length-1];return LV[clefKey()][lvl].idx;}
+function finishTest(){S.test=false;let reach=-1;for(let b=0;b<5;b++){if(G.testWrong[b]<=1)reach=b;else break;}
+  const P=CUR?(CUR.prog=CUR.prog||{}):{};let top=-1;if(reach>=0){TEST_BLOCKS.slice(0,reach+1).forEach(bl=>bl.forEach(i=>{if(CUR&&!CUR.guest)P['readok_'+clefKey()+'_'+i]=1;top=i;}));saveDB();}
+  const start=Math.min(top+1,7);S.lv=start;save();
+  const correct=20-G.testWrong.reduce((a,b)=>a+b,0);
+  win(reach>=3?3:reach>=1?2:1,`答對 ${correct} / 20 題`,top<0?'先從第 1 關開始，一關一關挑戰吧！':top>=7?'太厲害了！全部關卡都打開了':`可以直接從第 ${start+1} 關開始！前面的關卡都幫你打開了`,{againText:'開始挑戰'});}
 function readSetup(){
-  if(S.lv>=levels().length||!lvOpen(S.lv))S.lv=0;G.roundWrong=0;
+  if(S.test&&!G.testWrong)S.test=false;
+  if(!S.test&&(S.lv>=levels().length||!lvOpen(S.lv)))S.lv=0;G.roundWrong=0;refreshKeys();
   const LOCKS='<svg viewBox="0 0 24 24" width="13" height="13" fill="none" stroke="currentColor" stroke-width="2.5"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
   const BACK='<svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round"><path d="M15 5l-7 7 7 7"/></svg>';
-  if(S.timed){$('sub').innerHTML=`<button class="chip" id="lvBack" style="display:flex;align-items:center;gap:3px">${BACK}選挑戰</button><span class="chip on">30 秒・${S.dyad?'雙音':CLEFNAMES[clefKey()]}</span>`;$('lvBack').onclick=()=>showLevels('timed');
+  if(S.test){$('sub').innerHTML=`<button class="chip" id="lvBack" style="display:flex;align-items:center;gap:3px">${BACK}選關卡</button><span class="chip on">跳級測試・${CLEFNAMES[clefKey()]}</span>`;$('lvBack').onclick=()=>{S.test=false;showLevels('read');};say('跳級測試：20 題，每題只能按一次喔！');}
+  else if(S.timed){$('sub').innerHTML=`<button class="chip" id="lvBack" style="display:flex;align-items:center;gap:3px">${BACK}選挑戰</button><span class="chip on">30 秒・${S.dyad?'雙音':CLEFNAMES[clefKey()]}</span>`;$('lvBack').onclick=()=>showLevels('timed');
     const mb=myBest();say(mb?`你的紀錄是 ${mb} 個，挑戰看看！`:'30 秒能答對幾個？');}
   else{$('sub').innerHTML=`<button class="chip" id="lvBack" style="display:flex;align-items:center;gap:3px">${BACK}選關卡</button><span class="chip on">${CLEFNAMES[clefKey()]}・${levels()[S.lv].name}</span>`;$('lvBack').onclick=()=>showLevels('read');}
   $('beats').style.visibility='hidden';$('listenTxt').textContent='聽聽看';
@@ -698,10 +709,11 @@ function myBest(){const P=(CUR&&CUR.prog)||{};return P[tkey()]||0;}
 function classBest(){let v=0,name='';(DB.studs||[]).forEach(st=>{const b=(st.prog||{})[tkey()]||0;if(b>v){v=b;name=st.name;}});return {v,name};}
 function rankHtml(){const k=tkey();const L=(DB.studs||[]).map(st=>({n:st.name,c:st.color,v:(st.prog||{})[k]||0})).filter(x=>x.v>0).sort((a,b)=>b.v-a.v).slice(0,5);
   if(!L.length)return '';return '<div class="rank"><div class="tier" style="margin:0 0 4px">30 秒'+(S.dyad?'雙音':'')+'排行榜（'+CLEFNAMES[clefKey()]+'）</div>'+L.map((x,i)=>`<div class="rrow ${CUR&&x.n===CUR.name?'me':''}"><b>${i+1}</b><span class="av" style="background:${x.c}">${x.n.slice(0,1)}</span><span>${x.n}</span><em>${x.v} 個</em></div>`).join('')+'</div>';}
-function drawReadStars(){const rc=(CUR&&CUR.prog&&CUR.prog.readCount)||0;const toGo=READ_GOAL-rc%READ_GOAL;const goal=`<span class="recp">再答對 ${toGo} 題拿貼紙</span>`;if(S.timed){const mb=G.myBest||0,cb=classBest();if(G.score>mb&&mb>0&&!G.broke){G.broke=true;say('破紀錄了！');popStar();}
+function drawReadStars(){if(S.test){info(`跳級測試　第 <b style="font-size:20px;margin:0 3px">${Math.min((G.testI||0)+1,20)}</b> / 20 題`);return;}const rc=(CUR&&CUR.prog&&CUR.prog.readCount)||0;const toGo=READ_GOAL-rc%READ_GOAL;const goal=`<span class="recp">再答對 ${toGo} 題拿貼紙</span>`;if(S.timed){const mb=G.myBest||0,cb=classBest();if(G.score>mb&&mb>0&&!G.broke){G.broke=true;say('破紀錄了！');popStar();}
   info(`剩下 <b style="color:#f4845f;font-size:20px;margin:0 3px">${G.left}</b> 秒　答對 <b style="font-size:20px;margin:0 3px">${G.score}</b> 個　<span class="recp ${G.score>mb&&mb>0?'hot':''}">我的紀錄 ${Math.max(mb,G.score>mb&&mb>0?G.score:mb)}</span>`+(cb.v?`<span class="recp">全班第一 ${cb.name} ${cb.v}</span>`:''));return;}info(Array.from({length:10},(_,i)=>`<span style="opacity:${i<G.score?1:.18};display:flex">${starSvg()}</span>`).join('')+(CUR?goal:''));}
 function readNext(){
-  const L=levels();const pool=S.timed?L[L.length-1].idx:L[S.lv].idx;let d;do{d=pool[Math.floor(Math.random()*pool.length)];}while(pool.length>1&&d===G.last);
+  if(S.test){if(G.testI>=20){finishTest();return;}G.testPool=testPoolFor(G.testI);}
+  const L=levels();const pool=S.test?G.testPool:S.timed?(clefKey()==='grand'?L[L.length-1].idx:L[5].idx):L[S.lv].idx;let d;do{d=pool[Math.floor(Math.random()*pool.length)];}while(pool.length>1&&d===G.last);
   const c=clefKey();const staff=c==='bass'?'b':c==='treble'?'t':(d>7?'t':d<7?'b':(Math.random()<.5?'t':'b'));
   let d2=null;if(S.timed&&S.dyad){const cand=pool.filter(x=>Math.abs(x-d)>=2&&Math.abs(x-d)<=4&&(c!=='grand'||(x>=7)===(d>=7)));if(cand.length)d2=cand[Math.floor(Math.random()*cand.length)];}
   const st2=c==='grand'&&d2!=null?(d>=7?'t':'b'):staff;
@@ -712,7 +724,7 @@ function readNext(){
 function fitView(svg,wrap,w0,y0,h0){const cw=Math.max(1,wrap.clientWidth),ch=Math.max(1,wrap.clientHeight),sc=Math.min(ch/h0,cw/w0),W=cw/sc,H=ch/sc;svg.setAttribute('viewBox',`${-(W-w0)/2} ${y0-(H-h0)/2} ${W} ${H}`);return{W,H};}
 function drawRead(state){
   const svg=$('staff'),wrap=$('staffwrap');svg.innerHTML='';const grand=clefKey()==='grand';
-  fitView(svg,wrap,400,grand?30:28,grand?250:150);
+  const wide=!grand&&(S.test||(!S.timed&&S.lv>=6));fitView(svg,wrap,400,grand?30:wide?0:28,grand?250:wide?210:150);
   allLines(svg,8,392);el('line',{x1:392,x2:392,y1:60,y2:grand?270:140,stroke:'#5b4a36','stroke-width':2},svg);
   if(grand){el('line',{x1:8,x2:8,y1:60,y2:270,stroke:'#5b4a36','stroke-width':2},svg);}
   drawClefs(svg,14);
@@ -725,6 +737,8 @@ function drawRead(state){
 }
 function readInput(m,src){
   if(!G.target||G.busy)return;const d=G.target.d;
+  if(S.test){G.busy=true;const ok=same(m,midiOf(d),src);if(!ok){G.testWrong[Math.floor(G.testI/4)]++;flashKey(m,'bad',400);mood('oops');say('下一題！');}else{mood('happy');say('對！');const k=keyEls[midiOf(d)];if(k)k.classList.add('ok');drawRead('ok');}
+    G.testI++;drawReadStars();setTimeout(()=>{if(S.mode==='read'&&S.test)readNext();},ok?600:800);return;}
   if(G.target.d2!=null){const hit=[G.target.d,G.target.d2].find(x=>!G.got.has(x)&&same(m,midiOf(x),src));
     if(hit!=null){G.got.add(hit);const k=keyEls[midiOf(hit)];if(k)k.classList.add('ok');if(G.got.size<2){drawRead('');say('還有一個音！');return;}}
     else if([G.target.d,G.target.d2].some(x=>G.got.has(x)&&same(m,midiOf(x),src)))return;
@@ -752,15 +766,16 @@ const CHECKI='<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy
 function showLevels(kind){G.lvKind=kind;const P=(CUR&&CUR.prog)||{};let tabs='',cards='';
   if(kind==='read'){$('lvTitle').textContent='認音符：選關卡';$('lvNote').textContent='一輪 10 題全部答對，就會打開下一關';
     tabs=[['treble','高音'],['bass','低音'],['grand','雙手']].map(([c,n])=>`<button class="chip ${clefKey()===c?'on':''}" data-c="${c}">${n}</button>`).join('');
-    cards=levels().map((l,i)=>{const ok=lvOpen(i),done=P['readok_'+clefKey()+'_'+i];const [a,...b]=l.name.split(' ');return `<button class="lcard ${ok?'':'lock'}" data-i="${i}" ${ok?'':'disabled'}><em>${a}</em><b>${b.join(' ')}</b><span>${done?CHECKI:ok?'':LOCKI}</span></button>`;}).join('');}
+    const testCard=clefKey()!=='grand'?`<button class="lcard" data-test="1" style="background:#fff6e0"><em>跳級</em><b>測試 20 題</b><span style="font-size:12px;color:#a07f56">程度好可以直接跳關</span></button>`:'';
+    cards=levels().map((l,i)=>{const ok=lvOpen(i),done=P['readok_'+clefKey()+'_'+i];const [a,...b]=l.name.split(' ');return `<button class="lcard ${ok?'':'lock'}" data-i="${i}" ${ok?'':'disabled'}><em>${a}</em><b>${b.join(' ')}</b><span>${done?CHECKI:ok?'':LOCKI}</span></button>`;}).join('')+testCard;}
   else if(kind==='rhythm'){$('lvTitle').textContent='打節奏：選關卡';$('lvNote').textContent='全部打對一次，就會打開下一關';
     cards=RLV.map((n,i)=>{const ok=rlvOpen(i),done=P['rhyok_'+i];return `<button class="lcard ${ok?'':'lock'}" data-i="${i}" ${ok?'':'disabled'}><em>第${i+1}關</em><b>${n}</b><span>${done?CHECKI:ok?'':LOCKI}</span></button>`;}).join('')+`<button class="lcard" data-i="c"><em>老師</em><b>自訂節奏</b><span></span></button>`;}
   else{$('lvTitle').textContent='30 秒挑戰：選一個';$('lvNote').textContent='看 30 秒內能答對幾個，挑戰自己的紀錄！';
     cards=[['treble','高音',0],['bass','低音',0],['grand','雙手',0],['treble','雙音',1]].map(([c,n,dy],i)=>{const b=P['timed30_'+c+(dy?'_2':'')]||0;return `<button class="lcard" data-c="${c}" data-dy="${dy}"><em>${n}</em><b>${dy?'兩個音一起':CLEFNAMES[c]+'譜'}</b><span style="font-size:13px;color:#a07f56">${b?'紀錄 '+b+' 個':''}</span></button>`;}).join('');}
-  $('lvTabs').innerHTML=tabs;$('lvGrid').innerHTML=cards;$('lvGrid').style.gridTemplateColumns=kind==='timed'?'repeat(4,min(22vw,34vh,190px))':'';
+  $('lvTabs').innerHTML=tabs;$('lvGrid').innerHTML=cards;$('lvGrid').style.gridTemplateColumns=kind==='read'&&clefKey()!=='grand'?'repeat(3,min(26vw,22vh,170px))':kind==='timed'?'repeat(4,min(22vw,34vh,190px))':'';
   $('lvTabs').querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{S.clef=b.dataset.c;save();showLevels(kind);});
   $('lvGrid').querySelectorAll('.lcard:not(.lock)').forEach(b=>b.onclick=()=>{$('lvSel').classList.add('hide');audio();
-    if(kind==='read'){S.lv=+b.dataset.i;S.timed=false;S.dyad=false;save();enterMode('read');}
+    if(kind==='read'){S.timed=false;S.dyad=false;if(b.dataset.test){startTest();return;}S.test=false;S.lv=+b.dataset.i;save();enterMode('read');}
     else if(kind==='rhythm'){S.learn=false;G.rhy=null;if(b.dataset.i==='c'){S.rlv='c';save();enterMode('rhythm');showRhySet();}else{S.rlv=+b.dataset.i;save();enterMode('rhythm');}}
     else{S.clef=b.dataset.c;S.dyad=b.dataset.dy==='1';S.timed=true;save();enterMode('read');}});
   $('lvSel').classList.remove('hide');}
@@ -1063,7 +1078,7 @@ function demoScroll(){const so=curSong();stopPerform();const tempo=S.mode==='pra
     requestAnimationFrame(loop);};requestAnimationFrame(loop);}
 $('listen').onclick=()=>{audio();if(S.mode==='pitch'){pitchPlay();return;}if(S.mode==='read'){if(G.target)tone(midiOf(G.target.d),0,1.2,.3);}else demoScroll();};
 $('go').onclick=()=>{audio();showPicker();};
-$('again').onclick=()=>{$('win').classList.add('hide');enterMode(S.mode);};
+$('again').onclick=()=>{$('win').classList.add('hide');S.test=false;enterMode(S.mode);};
 $('win').addEventListener('click',e=>{},true);
 $('replay').onclick=()=>{$('win').classList.add('hide');enterMode('perform');};
 $('toMenu').onclick=()=>{$('win').classList.add('hide');showSongs();};
