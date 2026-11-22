@@ -1049,7 +1049,7 @@ $('home').querySelectorAll('.hcard').forEach(b=>b.onclick=()=>{audio();const h=b
   else if(h==='pitch'){enterMode('pitch');}
   else{S.mode=h;save();showSongs();}});
 const CNUM=['','一','二','三','四'];let countT=[];
-function speakNum(n){if(n===2)return;try{const u=new SpeechSynthesisUtterance(CNUM[n]);u.lang='zh-TW';u.rate=1.4;u.volume=1;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}}
+function speakNum(n){return;try{const u=new SpeechSynthesisUtterance(CNUM[n]);u.lang='zh-TW';u.rate=1.4;u.volume=1;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}}
 function stopCount(){countT.forEach(clearTimeout);countT=[];try{speechSynthesis.cancel();}catch(e){}}
 function scheduleCount(so,t0,spb){stopCount();if(so.rhythm&&false)return;const seen=new Set();
   so.notes.forEach(nt=>{if(nt.rest||nt.dur<2)return;for(let k=1;k<Math.floor(nt.dur);k++){const b=nt.beat+k;if(seen.has(b))continue;seen.add(b);const n=k+1;
