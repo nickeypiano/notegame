@@ -262,6 +262,9 @@ html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscro
  #win .winstars svg{width:42px;height:42px}#win .big{font-size:22px;margin:2px 0}#win #winSub{font-size:14px}#win .legend{padding:4px 10px;margin:4px 0}#win .lrow{font-size:12px;padding:0}
  .winbtns .btn{font-size:16px;padding:8px 18px;margin:3px;box-shadow:0 3px 0 #c9603e}.winbtns .btn.sec{box-shadow:0 3px 0 #4f93b3}
  .avgrid{grid-template-columns:repeat(auto-fill,58px)}}
+#home{justify-content:flex-start}#home>:first-child{margin-top:2vh}#home>:last-child{margin-bottom:auto}
+@media (min-height:541px){.hgrid{grid-template-columns:repeat(3,min(28vw,calc((100vh - 140px)/2),300px))!important;gap:16px!important}.hcard b{font-size:clamp(18px,2.6vh,24px)!important}.hcard span{font-size:clamp(12px,1.7vh,15px)!important}}
+.pbtn .av svg,.av svg{width:100%!important;height:100%!important}
 </style>
 </head>
 <body>
@@ -1046,7 +1049,7 @@ $('home').querySelectorAll('.hcard').forEach(b=>b.onclick=()=>{audio();const h=b
   else if(h==='pitch'){enterMode('pitch');}
   else{S.mode=h;save();showSongs();}});
 const CNUM=['','一','二','三','四'];let countT=[];
-function speakNum(n){try{const u=new SpeechSynthesisUtterance(CNUM[n]);u.lang='zh-TW';u.rate=1.4;u.volume=1;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}}
+function speakNum(n){if(n===2)return;try{const u=new SpeechSynthesisUtterance(CNUM[n]);u.lang='zh-TW';u.rate=1.4;u.volume=1;speechSynthesis.cancel();speechSynthesis.speak(u);}catch(e){}}
 function stopCount(){countT.forEach(clearTimeout);countT=[];try{speechSynthesis.cancel();}catch(e){}}
 function scheduleCount(so,t0,spb){stopCount();if(so.rhythm&&false)return;const seen=new Set();
   so.notes.forEach(nt=>{if(nt.rest||nt.dur<2)return;for(let k=1;k<Math.floor(nt.dur);k++){const b=nt.beat+k;if(seen.has(b))continue;seen.add(b);const n=k+1;
