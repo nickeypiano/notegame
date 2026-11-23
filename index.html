@@ -1159,19 +1159,19 @@ function micLoop(){
   const minR=Math.min(...mic.hist.slice(0,-1));
   const now=ac.currentTime;const gap=now-(mic.lastT||0);
   if(rc>.018&&rc>minR*1.6){mic.onsetT=now;}
-  if(rc>.018&&rc>minR*1.8&&gap>.1){mic.armed=true;mic.armT=now;}
-  if(mic.armed&&now-mic.armT>.35)mic.armed=false;
+  if(rc>.015&&rc>minR*1.4&&gap>.1){mic.armed=true;mic.armT=now;}
+  if(mic.armed&&now-mic.armT>.5)mic.armed=false;
   if(S.mode==='read'&&G.target&&G.target.d2!=null&&!G.busy&&rc>.012)checkDyad();
   if(S.mode==='rhythm'){if(mic.armed&&rc>.03){mic.armed=false;mic.lastT=now;input(71,'mic');}mic.raf=requestAnimationFrame(micLoop);return;}
   let m=-1,cents=99;if(f>60&&f<1150){const mf=69+12*Math.log2(f/440);m=Math.round(mf);cents=Math.abs(mf-m)*100;}
   mic.fh=(mic.fh||[]);mic.fh.push(f>0?f:0);if(mic.fh.length>4)mic.fh.shift();
   const fs=mic.fh.slice(-3);const steady=fs.length===3&&fs.every(x=>x>0)&&Math.abs(1200*Math.log2(Math.max(...fs)/Math.min(...fs)))<25;
-  const pianoLike=m>0&&steady&&cents<30&&(mic.clar==null||mic.clar<.09);
+  const pianoLike=m>0&&steady&&cents<35&&(mic.clar==null||mic.clar<.12);
   if(m>0&&m===mic.cand&&pianoLike)mic.cnt++;else{mic.cand=pianoLike?m:-1;mic.cnt=pianoLike?1:0;}
   if(performance.now()-(G.kbdT||0)<600){mic.raf=requestAnimationFrame(micLoop);return;}
   const newPc=mic.lastEmit==null||((m-mic.lastEmit)%12+12)%12!==0;
   if(S.mode==='read'&&G.target&&G.target.d2!=null&&(mic.onsetT||0)<(G.qT||0)+.05){mic.raf=requestAnimationFrame(micLoop);return;}
-  if(m>0&&mic.cnt>=3&&mic.armed&&now-mic.armT<.3){
+  if(m>0&&((mic.cnt>=3&&mic.armed)||(mic.cnt>=6&&newPc&&gap>.15&&rc>.012))){
     mic.armed=false;mic.lastT=now;mic.lastEmit=m;$('heard').textContent=SOLFA[m%12];input(m,'mic');
   }
   if(rms<.006){mic.lastEmit=null;}
