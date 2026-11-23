@@ -1152,7 +1152,8 @@ function checkDyad(){mic.fan.getFloatFrequencyData(mic.fbuf);let mx=-200;for(let
 function micStop(){mic.on=false;if(mic.stream)mic.stream.getTracks().forEach(t=>t.stop());cancelAnimationFrame(mic.raf);$('micBtn').classList.remove('live');$('micinfo').classList.remove('on');$('listen').style.display='';}
 function micLoop(){
   if(!mic.on)return;mic.an.getFloatTimeDomainData(mic.buf);
-  const[f,rms]=autoCorr(mic.buf,ac.sampleRate);
+  let[f,rms]=autoCorr(mic.buf,ac.sampleRate);
+  if(f>0&&mic.fan){mic.fan.getFloatFrequencyData(mic.fbuf);for(const k of [3,2]){const fc=f/k;if(fc<60)continue;const [p1,f1]=bandPeak(fc);const [p2,f2]=bandPeak(fc*(k===3?2:3));if(p1-f1>10&&p2-f2>6){f=fc;break;}}}
   $('lvl').style.width=Math.min(100,rms*600)+'%';
   const rc=mic.recent||rms;mic.hist.push(rc);if(mic.hist.length>6)mic.hist.shift();
   const minR=Math.min(...mic.hist.slice(0,-1));
