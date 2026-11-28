@@ -1191,6 +1191,7 @@ function checkExpect(){const ex=expNotes();if(!ex.length){mic.exOk={};return;}
     const r1=p1-m1,r2=p2-m2;let up=r1>=8||r2>=12||(r1>=1&&r2>=1&&r1+r2>=10);
     if(S.mode==='read')up=r1>=7&&p1-f1>12&&p1>mx-30;
     if(f/2>=55){const [p0,f0]=bandPeak(f/2);const m0=rm(e.k+'c',p0);if(up&&p0-f0>12&&p0-m0>=8&&p0>p1-12)up=false;}
+    if(m===mic.lastEmit&&(now-(mic.lastT||0)<.2||(mic.onsetT||0)<=(mic.lastT||0)))up=false;
     mic.exOk[e.k]=there&&up?(mic.exOk[e.k]||0)+1:0;
     if(mic.exOk[e.k]>=2){mic.exOk[e.k]=0;mic.lastT=now;mic.lastEmit=m;mic.armed=false;mic.cnt=0;$('heard').textContent=SOLFA[m%12];input(m,'mic');return true;}}
   return false;}
@@ -1204,7 +1205,7 @@ function micLoop(){
   const minR=Math.min(...mic.hist.slice(0,-1));
   const now=ac.currentTime;const gap=now-(mic.lastT||0);
   if(rc>.018&&rc>minR*1.6){mic.onsetT=now;if(now-(mic.rstT||0)>.12){mic.rstT=now;mic.cand=-1;mic.cnt=0;mic.fh=[];}}
-  if(rc>.02&&rc>minR*2.2)mic.strongT=now;
+  if(rc>.02&&rc>minR*2.2&&now-(mic.lastT||0)>.15)mic.strongT=now;
   if(rc>.015&&rc>minR*1.4&&gap>.1){mic.armed=true;mic.armT=now;}
   if(mic.armed&&now-mic.armT>.5)mic.armed=false;
   if(S.mode==='read'&&G.target&&G.target.d2!=null&&!G.busy&&rc>.012)checkDyad();
@@ -1220,7 +1221,7 @@ function micLoop(){
   if(S.mode==='read'&&G.target&&G.target.d2!=null&&(mic.onsetT||0)<(G.qT||0)+.05){mic.raf=requestAnimationFrame(micLoop);return;}
   let hold=false;
   if(m>0&&m===mic.lastEmit){
-    if(now-(mic.strongT||0)>.25||(mic.strongT||0)<=(mic.lastT||0))hold=true;
+    if(now-(mic.strongT||0)>.25||(mic.strongT||0)<=(mic.lastT||0)||now-(mic.lastT||0)<.18)hold=true;
     if(S.mode==='read'&&G.target&&G.target.d2==null&&m!==midiOf(G.target.d))hold=true;
   }
   if(!hold&&m>0&&((mic.cnt>=3&&mic.armed)||(mic.cnt>=6&&newPc&&gap>.15&&rc>.012))){
