@@ -1123,25 +1123,32 @@ try{if(navigator.requestMIDIAccess)navigator.requestMIDIAccess().then(acc=>{cons
 /* ---------- microphone pitch detection ---------- */
 const mic={on:false};
 const SOLFA=['Do','Do#','Re','Re#','Mi','Fa','Fa#','Sol','Sol#','La','La#','Si'];
-function autoCorr(buf,sr){
-  const N=buf.length;let rms=0;for(let i=0;i<N;i++)rms+=buf[i]*buf[i];rms=Math.sqrt(rms/N);
-  let rr=0;for(let i=N-512;i<N;i++)rr+=buf[i]*buf[i];mic.recent=Math.sqrt(rr/512);
-  if(rms<.006)return[-1,rms];
-  const W=768,minT=Math.floor(sr/1150),maxT=Math.min(N-W-1,Math.floor(sr/62));const d=mic.yd&&mic.yd.length===maxT+2?mic.yd:(mic.yd=new Float32Array(maxT+2));
-  d[0]=1;let run=0;let found=-1;
-  for(let t=1;t<=maxT;t++){let s=0;for(let j=0;j<W;j++){const x=buf[j]-buf[j+t];s+=x*x;}run+=s;d[t]=run?s*t/run:1;}
+function yin(buf,sr,W,maxT){
+  const N=buf.length;const o=N-W-maxT-1;const minT=Math.floor(sr/1150);
+  const d=mic.yd&&mic.yd.length>=maxT+2?mic.yd:(mic.yd=new Float32Array(maxT+2));
+  d[0]=1;let run=0,found=-1;
+  for(let t=1;t<=maxT;t++){let s=0;for(let j=o;j<o+W;j++){const x=buf[j]-buf[j+t];s+=x*x;}run+=s;d[t]=run?s*t/run:1;}
   for(let t=minT;t<maxT;t++){if(d[t]<.15){while(t+1<maxT&&d[t+1]<d[t])t++;found=t;break;}}
   if(found<0){let mv=1,mp=-1;for(let t=minT;t<maxT;t++)if(d[t]<mv){mv=d[t];mp=t;}if(mv<.3)found=mp;}
-  if(found<0)return[-1,rms];
-  mic.clar=d[found];const x1=d[found-1],x2=d[found],x3=d[found+1];const a=(x1+x3-2*x2)/2,b=(x3-x1)/2;const T=a?found-b/(2*a):found;
-  return[sr/T,rms];
+  if(found<0)return[-1,1];
+  const x1=d[found-1],x2=d[found],x3=d[found+1];const a=(x1+x3-2*x2)/2,b=(x3-x1)/2;const T=a?found-b/(2*a):found;
+  return[sr/T,x2];
+}
+function autoCorr(buf,sr){
+  const N=buf.length;let rms=0;for(let i=N-2048;i<N;i++)rms+=buf[i]*buf[i];rms=Math.sqrt(rms/2048);
+  let rr=0;for(let i=N-512;i<N;i++)rr+=buf[i]*buf[i];mic.recent=Math.sqrt(rr/512);
+  if(rms<.006)return[-1,rms];
+  let [f,c]=yin(buf,sr,768,Math.floor(sr/60));
+  if(f<0||f<185){const T=Math.floor(sr/60);const W=Math.min(N-T-2,Math.max(768,Math.round(2.6*sr/Math.max(62,f>0?f:62))));[f,c]=yin(buf,sr,W,T);}
+  if(f<0)return[-1,rms];
+  mic.clar=c;return[f,rms];
 }
 async function micStart(){
   audio();
   try{
     if(!navigator.mediaDevices||!navigator.mediaDevices.getUserMedia)throw new Error('none');
     const stream=await navigator.mediaDevices.getUserMedia({audio:{echoCancellation:false,noiseSuppression:false,autoGainControl:false}});
-    mic.stream=stream;mic.src=ac.createMediaStreamSource(stream);mic.an=ac.createAnalyser();mic.an.fftSize=2048;mic.src.connect(mic.an);
+    mic.stream=stream;mic.src=ac.createMediaStreamSource(stream);mic.an=ac.createAnalyser();mic.an.fftSize=4096;mic.src.connect(mic.an);
     mic.buf=new Float32Array(mic.an.fftSize);mic.fan=ac.createAnalyser();mic.fan.fftSize=8192;mic.fan.smoothingTimeConstant=0;mic.src.connect(mic.fan);mic.fbuf=new Float32Array(4096);mic.dyOk=0;mic.on=true;mic.hist=[];mic.cand=-1;mic.cnt=0;mic.lastEmit=null;mic.armed=false;
     $('micBtn').classList.add('live');$('micinfo').classList.add('on');$('listen').style.display='none';
     toast('麥克風開了！把手機或平板放在鋼琴旁邊，彈 C4（中央 Do）到 C5 之間的音。',4500);
@@ -1164,7 +1171,7 @@ function micStop(){mic.on=false;if(mic.stream)mic.stream.getTracks().forEach(t=>
 function micLoop(){
   if(!mic.on)return;mic.an.getFloatTimeDomainData(mic.buf);
   let[f,rms]=autoCorr(mic.buf,ac.sampleRate);
-  if(f>0&&mic.fan){mic.fan.getFloatFrequencyData(mic.fbuf);for(const k of [3,2]){const fc=f/k;if(fc<60)continue;const [p1,f1]=bandPeak(fc);const [p2,f2]=bandPeak(fc*(k===3?2:3));if(p1-f1>10&&p2-f2>6){f=fc;break;}}if(f<300){const [q1,g1]=bandPeak(f),[q2,g2]=bandPeak(f*2);if(q1-g1<6&&q2-g2>15&&q2-q1>20)f*=2;}}
+  if(f>0&&mic.fan){mic.fan.getFloatFrequencyData(mic.fbuf);for(const k of [3,2]){const fc=f/k;if(fc<60)continue;const [p1,f1]=bandPeak(fc);const [p2,f2]=bandPeak(fc*(k===3?2:3));if(p1-f1>10&&p2-f2>6){f=fc;break;}}if(f<300&&clefKey()==='treble'){const [q1,g1]=bandPeak(f),[q2,g2]=bandPeak(f*2);if(q1-g1<6&&q2-g2>15&&q2-q1>20)f*=2;}}
   $('lvl').style.width=Math.min(100,rms*600)+'%';
   const rc=mic.recent||rms;mic.hist.push(rc);if(mic.hist.length>6)mic.hist.shift();
   const minR=Math.min(...mic.hist.slice(0,-1));
@@ -1179,14 +1186,14 @@ function micLoop(){
   let m=-1,cents=99;if(f>60&&f<1150){const mf=69+12*Math.log2(f/440);m=Math.round(mf);cents=Math.abs(mf-m)*100;}
   mic.fh=(mic.fh||[]);mic.fh.push(f>0?f:0);if(mic.fh.length>4)mic.fh.shift();
   const fs=mic.fh.slice(-3);const steady=fs.length===3&&fs.every(x=>x>0)&&Math.abs(1200*Math.log2(Math.max(...fs)/Math.min(...fs)))<25;
-  const pianoLike=m>0&&steady&&cents<35&&(mic.clar==null||mic.clar<.12);
+  const pianoLike=m>0&&steady&&cents<35&&(mic.clar==null||mic.clar<(f<140?.2:.12));
   if(m>0&&m===mic.cand&&pianoLike)mic.cnt++;else{mic.cand=pianoLike?m:-1;mic.cnt=pianoLike?1:0;}
   if(performance.now()-(G.kbdT||0)<600){mic.raf=requestAnimationFrame(micLoop);return;}
   const newPc=mic.lastEmit==null||((m-mic.lastEmit)%12+12)%12!==0;
   if(S.mode==='read'&&G.target&&G.target.d2!=null&&(mic.onsetT||0)<(G.qT||0)+.05){mic.raf=requestAnimationFrame(micLoop);return;}
   let hold=false;
   if(m>0&&m===mic.lastEmit){
-    if(now-(mic.strongT||0)>.25)hold=true;
+    if(now-(mic.strongT||0)>.25||(mic.strongT||0)<=(mic.lastT||0))hold=true;
     if(S.mode==='read'&&G.target&&G.target.d2==null&&m!==midiOf(G.target.d))hold=true;
   }
   if(!hold&&m>0&&((mic.cnt>=3&&mic.armed)||(mic.cnt>=6&&newPc&&gap>.15&&rc>.012))){
