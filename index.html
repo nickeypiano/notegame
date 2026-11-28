@@ -472,7 +472,7 @@ const LV={
  bass:[3,4,5,6,7,8,12,15].map((n,k)=>({name:`第${k+1}關 ${{3:'中央Do～La',4:'中央Do～Sol',5:'中央Do～Fa',6:'中央Do～Mi',7:'中央Do～Re',8:'中央Do～Do',12:'中央Do～低音Fa',15:'中央Do～低低Do'}[n]}`,idx:Array.from({length:n},(_,x)=>7-x)})),
  grand:[{name:'第1關 中央Do附近',idx:[4,5,6,7,8,9,10]},{name:'第2關 兩個八度',idx:[0,1,2,3,4,5,6,7,8,9,10,11,12,13,14]}]};
 function lvTop(){let t=0;for(let i=0;i<levels().length;i++)if(lvOpen(i))t=i;return t;}
-function lvPlay(i){if(!lvOpen(i))return false;if(!CUR||CUR.guest||(CUR.prog&&CUR.prog.unlockAll))return true;return i>=lvTop()-1;}
+function lvPlay(i){if(G.pinLv===i&&G.pinClef===clefKey())return true;if(!lvOpen(i))return false;if(!CUR||CUR.guest||(CUR.prog&&CUR.prog.unlockAll))return true;return i>=lvTop()-1;}
 function lvOpen(i){if(i===0||!CUR||CUR.guest)return true;const P=CUR.prog||{};return !!(P.unlockAll||P['readok_'+clefKey()+'_'+(i-1)]);}
 const clefKey=()=>S.clef==='bass'||S.clef==='grand'?S.clef:'treble';
 const levels=()=>LV[clefKey()];
@@ -776,17 +776,22 @@ const RLV=['四分・二分・全音符','休止符','八分音符','附點音�
 function rlvOpen(i){if(i===0||!CUR||CUR.guest)return true;const P=CUR.prog||{};return !!(P.unlockAll||P['rhyok_'+(i-1)]);}
 const CHECKI='<svg viewBox="0 0 24 24" width="22" height="22"><circle cx="12" cy="12" r="11" fill="#43b97f"/><path d="M7 12l3.5 3.5L17 9" stroke="#fff" stroke-width="2.5" fill="none" stroke-linecap="round"/></svg>';
 function showLevels(kind){G.lvKind=kind;const P=(CUR&&CUR.prog)||{};let tabs='',cards='';
-  if(kind==='read'){$('lvTitle').textContent='認音符：選關卡';$('lvNote').textContent='一輪 10 題全部答對，就會打開下一關・可以玩最新的兩關';
+  if(kind==='read'){$('lvTitle').textContent='認音符：選關卡';$('lvNote').textContent='一輪 10 題全部答對，就會打開下一關・可以玩最新的兩關・老師按鎖住的關卡輸入密碼可解鎖';
     tabs=[['treble','高音'],['bass','低音'],['grand','雙手']].map(([c,n])=>`<button class="chip ${clefKey()===c?'on':''}" data-c="${c}">${n}</button>`).join('');
     const testCard=clefKey()!=='grand'?`<button class="lcard" data-test="1" style="background:#fff6e0"><em>跳級</em><b>測試 20 題</b><span style="font-size:12px;color:#a07f56">程度好可以直接跳關</span></button>`:'';
-    cards=levels().map((l,i)=>{const open=lvOpen(i),ok=lvPlay(i),grad=open&&!ok,done=P['readok_'+clefKey()+'_'+i];const [a,...b]=l.name.split(' ');return `<button class="lcard ${ok?'':grad?'grad':'lock'}" data-i="${i}" ${ok?'':'disabled'}><em>${a}</em><b>${b.join(' ')}</b><span>${grad?CHECKI+'<small style="font-size:12px;color:#43b97f;margin-left:3px">已畢業</small>':done?CHECKI:ok?'':LOCKI}</span></button>`;}).join('')+testCard;}
+    cards=levels().map((l,i)=>{const open=lvOpen(i),ok=lvPlay(i),grad=open&&!ok,done=P['readok_'+clefKey()+'_'+i];const [a,...b]=l.name.split(' ');return `<button class="lcard ${ok?'':grad?'grad':'lock'}" data-i="${i}"><em>${a}</em><b>${b.join(' ')}</b><span>${grad?CHECKI+'<small style="font-size:12px;color:#43b97f;margin-left:3px">已畢業</small>':done?CHECKI:ok?'':LOCKI}</span></button>`;}).join('')+testCard;}
   else if(kind==='rhythm'){$('lvTitle').textContent='打節奏：選關卡';$('lvNote').textContent='全部打對一次，就會打開下一關';
-    cards=RLV.map((n,i)=>{const ok=rlvOpen(i),done=P['rhyok_'+i];return `<button class="lcard ${ok?'':'lock'}" data-i="${i}" ${ok?'':'disabled'}><em>第${i+1}關</em><b>${n}</b><span>${done?CHECKI:ok?'':LOCKI}</span></button>`;}).join('')+`<button class="lcard" data-i="c"><em>老師</em><b>自訂節奏</b><span></span></button>`;}
+    cards=RLV.map((n,i)=>{const ok=rlvOpen(i),done=P['rhyok_'+i];return `<button class="lcard ${ok?'':'lock'}" data-i="${i}"><em>第${i+1}關</em><b>${n}</b><span>${done?CHECKI:ok?'':LOCKI}</span></button>`;}).join('')+`<button class="lcard" data-i="c"><em>老師</em><b>自訂節奏</b><span></span></button>`;}
   else{$('lvTitle').textContent='30 秒挑戰：選一個';$('lvNote').textContent='看 30 秒內能答對幾個，挑戰自己的紀錄！';
     cards=[['treble','高音',0],['bass','低音',0],['grand','雙手',0],['treble','雙音',1]].map(([c,n,dy],i)=>{const b=P['timed30_'+c+(dy?'_2':'')]||0;return `<button class="lcard" data-c="${c}" data-dy="${dy}"><em>${n}</em><b>${dy?'兩個音一起':CLEFNAMES[c]+'譜'}</b><span style="font-size:13px;color:#a07f56">${b?'紀錄 '+b+' 個':''}</span></button>`;}).join('');}
   $('lvTabs').innerHTML=tabs;$('lvGrid').innerHTML=cards;$('lvGrid').style.gridTemplateColumns=kind==='read'&&clefKey()!=='grand'?'repeat(3,min(26vw,22vh,170px))':kind==='timed'?'repeat(4,min(22vw,34vh,190px))':'';
   $('lvTabs').querySelectorAll('[data-c]').forEach(b=>b.onclick=()=>{S.clef=b.dataset.c;save();showLevels(kind);});
-  $('lvGrid').querySelectorAll('.lcard:not(.lock)').forEach(b=>b.onclick=()=>{$('lvSel').classList.add('hide');audio();
+  $('lvGrid').querySelectorAll('.lcard.lock,.lcard.grad').forEach(b=>b.onclick=()=>askPin(()=>{const i=+b.dataset.i;const P=CUR.prog=CUR.prog||{};
+    if(kind==='read'){if(b.classList.contains('grad')){G.pinLv=i;G.pinClef=clefKey();}else{for(let j=0;j<i;j++)P['readok_'+clefKey()+'_'+j]=1;saveDB();}
+      $('lvSel').classList.add('hide');audio();S.timed=false;S.dyad=false;S.test=false;S.lv=i;save();enterMode('read');}
+    else if(kind==='rhythm'){for(let j=0;j<i;j++)P['rhyok_'+j]=1;saveDB();$('lvSel').classList.add('hide');audio();S.learn=false;G.rhy=null;S.rlv=i;save();enterMode('rhythm');}
+    toast('老師已解鎖');}));
+  $('lvGrid').querySelectorAll('.lcard:not(.lock):not(.grad)').forEach(b=>b.onclick=()=>{$('lvSel').classList.add('hide');audio();
     if(kind==='read'){S.timed=false;S.dyad=false;if(b.dataset.test){startTest();return;}S.test=false;S.lv=+b.dataset.i;save();enterMode('read');}
     else if(kind==='rhythm'){S.learn=false;G.rhy=null;if(b.dataset.i==='c'){S.rlv='c';save();enterMode('rhythm');showRhySet();}else{S.rlv=+b.dataset.i;save();enterMode('rhythm');}}
     else{S.clef=b.dataset.c;S.dyad=b.dataset.dy==='1';S.timed=true;save();enterMode('read');}});
@@ -814,15 +819,16 @@ const BEAT=100,X0=70,FIXW=118,BPAD=30;
 function xb(b){return X0+b*BEAT;}
 function bestStars(i,c=clefKey()){const L=c==='grand'?GSONGS:SONGS;const P=(CUR&&CUR.prog)||{};return P['perf_'+L[i].name+'_'+c]||0;}
 function hasProg(i,c){const L=c==='grand'?GSONGS:SONGS;const P=(CUR&&CUR.prog)||{};const n=L[i].name;return !!(P['perf_'+n+'_'+c]||P['prac_'+n+'_'+c]);}
-function unlocked(i,c=clefKey()){if(i===0||!CUR)return true;if(CUR.prog&&CUR.prog.unlockAll)return true;return bestStars(i,c)>=1||bestStars(i-1,c)>=1||hasProg(i,c);}
+function unlocked(i,c=clefKey()){if(i===0||!CUR)return true;if(CUR.prog&&CUR.prog.unlockAll)return true;const L=c==='grand'?GSONGS:SONGS;return bestStars(i,c)>=1||bestStars(i-1,c)>=1||hasProg(i,c)||!!(CUR.prog&&CUR.prog['unl_'+L[i].name+'_'+c]);}
 const NOTEI='<svg viewBox="0 0 24 24" width="16" height="16"><ellipse cx="8" cy="18" rx="4.5" ry="3.5" transform="rotate(-20 8 18)" fill="currentColor"/><path d="M12 17V4q6 2 7 8q-3-3-7-4" stroke="currentColor" stroke-width="2" fill="currentColor"/></svg>';
 const LOCKI='<svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="#b8a68c" stroke-width="2.2"><rect x="5" y="11" width="14" height="10" rx="2"/><path d="M8 11V8a4 4 0 0 1 8 0v3"/></svg>';
 function miniStars(n){return [0,1,2].map(k=>`<svg viewBox="0 0 24 24" width="18" height="18" style="opacity:${k<n?1:.2}"><path d="${STAR}" fill="#ffc53d" stroke="#e8a317" stroke-width="1.4"/></svg>`).join('');}
 function showSongs(){const L=songList();const T=clefKey()==='grand'?GTIERS:TIERS;if(S.tier==null||!L.some(x=>x.t===S.tier))S.tier=(L[S.song]||L[0]).t;
   let h=`<div class="ctabs">`+[['treble','高音譜'],['bass','低音譜'],['grand','雙手']].map(([c,n])=>`<button class="chip ${clefKey()===c?'on':''}" data-sc="${c}">${n}</button>`).join('')+`</div>`;
   h+=`<div class="ctabs">`+T.map((tn,t)=>L.some(x=>x.t===t)?`<button class="chip ${S.tier===t?'on':''}" data-tt="${t}">${tn.split('（')[0].split('：')[0]}</button>`:'').join('')+`</div><div class="sgrid3">`;
-  let no=0;L.forEach((so,i)=>{no++;if(so.t!==S.tier)return;const ok=unlocked(i);h+=`<button class="scard3 ${ok?'':'lock'} ${i===S.song?'on':''}" data-i="${i}" ${ok?'':'disabled'}><em>${no}</em><b>${so.name}</b><span>${ok?miniStars(bestStars(i)):LOCKI}</span></button>`;});
+  let no=0;L.forEach((so,i)=>{no++;if(so.t!==S.tier)return;const ok=unlocked(i);h+=`<button class="scard3 ${ok?'':'lock'} ${i===S.song?'on':''}" data-i="${i}"><em>${no}</em><b>${so.name}</b><span>${ok?miniStars(bestStars(i)):LOCKI}</span></button>`;});
   h+='</div>';$('songGrid').innerHTML=h;
+  $('songGrid').querySelectorAll('.scard3.lock').forEach(b=>b.onclick=()=>askPin(()=>{const i=+b.dataset.i;const P=CUR.prog=CUR.prog||{};P['unl_'+L[i].name+'_'+clefKey()]=1;saveDB();toast('老師已解鎖');S.song=i;save();$('songs').classList.add('hide');enterMode(S.mode);}));
   $('songGrid').querySelectorAll('.scard3:not(.lock)').forEach(b=>b.onclick=()=>{S.song=+b.dataset.i;save();$('songs').classList.add('hide');enterMode(S.mode);});
   $('songGrid').querySelectorAll('[data-sc]').forEach(b=>b.onclick=()=>{S.clef=b.dataset.sc;S.song=0;S.tier=null;save();showSongs();});
   $('songGrid').querySelectorAll('[data-tt]').forEach(b=>b.onclick=()=>{S.tier=+b.dataset.tt;showSongs();});
@@ -1252,7 +1258,7 @@ function showPicker(){
 }
 $('pickTeacher').onclick=()=>askPin(showTeacher);
 $('pickGuest').onclick=()=>{startSession({id:'guest',guest:true,name:'訪客',color:'#8d6e63',prog:{unlockAll:true},stickers:[]});};
-function startSession(st){CUR=st;$('studBtn').title=st.guest?'點這裡換人':'';audio();G.sess={gains:[],left:DB.minutes*60};updStud();$('picker').classList.add('hide');
+function startSession(st){CUR=st;G.pinLv=null;$('studBtn').title=st.guest?'點這裡換人':'';audio();G.sess={gains:[],left:DB.minutes*60};updStud();$('picker').classList.add('hide');
   say(`${st.name}，一起來玩吧！`);showHome();
   if(!st.guest&&st.prog&&st.prog.stkPending>0&&(!capN()||todayCount()<capN())){st.prog.stkPending--;saveDB();setTimeout(()=>offerSticker('上次存的','上次存起來的貼紙，現在可以選囉！'),900);}clearInterval(G.clockT);G.clockT=setInterval(tick,1000);tick();}
 function tick(){if(!G.sess)return;const c=$('clock');
