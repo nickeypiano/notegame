@@ -688,6 +688,8 @@ function finishTest(){S.test=false;let reach=-1;for(let b=0;b<5;b++){if(G.testWr
   const P=CUR?(CUR.prog=CUR.prog||{}):{};let top=-1;if(reach>=0){TEST_BLOCKS.slice(0,reach+1).forEach(bl=>bl.forEach(i=>{if(CUR&&!CUR.guest)P['readok_'+clefKey()+'_'+i]=1;top=i;}));saveDB();}
   const start=Math.min(top+1,7);S.lv=start;save();
   const correct=20-G.testWrong.reduce((a,b)=>a+b,0);
+  let stk=0;if(CUR&&!CUR.guest&&correct>0){CUR.prog=CUR.prog||{};const b0=CUR.prog.readCount||0,n=b0+correct;CUR.prog.readCount=n;saveDB();if(Math.floor(n/READ_GOAL)>Math.floor(b0/READ_GOAL))stk=Math.floor(n/READ_GOAL)*READ_GOAL;}
+  if(stk)setTimeout(()=>offerSticker('',`認音符累積答對 ${stk} 題！選一張貼紙`),900);
   win(reach>=3?3:reach>=1?2:1,`答對 ${correct} / 20 題`,top<0?'先從第 1 關開始，一關一關挑戰吧！':top>=7?'太厲害了！全部關卡都打開了':`可以直接從第 ${start+1} 關開始！前面的關卡都幫你打開了`,{againText:'開始挑戰'});}
 function readSetup(){
   if(S.test&&!G.testWrong)S.test=false;
