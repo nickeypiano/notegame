@@ -452,7 +452,7 @@ html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscro
     <div class="t">備份／換裝置</div>
     <div class="note" style="margin-top:0">進度只存在這台裝置的瀏覽器裡。換裝置前，先按「複製備份」，貼到新裝置的框框裡再按「匯入」。</div>
     <textarea id="backup" rows="3" placeholder="把備份文字貼在這裡"></textarea>
-    <div class="row"><button class="chip" id="saveFile">下載備份檔</button><label class="chip" style="cursor:pointer">從備份檔還原<input type="file" id="loadFile" accept=".json,application/json" style="display:none"></label><button class="chip" id="restorePrev">還原前一天的資料</button><button class="chip" id="snapBtn">選擇還原點</button></div><div id="snapList" class="row" style="flex-wrap:wrap;display:none"><button class="chip" id="copyBk">複製備份文字</button><button class="chip" id="importBk">匯入文字</button></div><div class="note" id="originNote"></div>
+    <div class="row"><button class="chip" id="saveFile">下載備份檔</button><label class="chip" style="cursor:pointer">從備份檔還原<input type="file" id="loadFile" accept=".json,application/json" style="display:none"></label><button class="chip" id="restorePrev">還原前一天的資料</button><button class="chip" id="snapBtn">選擇還原點</button><button class="chip" id="recoverBtn">找回遺失的星星</button></div><div id="snapList" class="row" style="flex-wrap:wrap;display:none"><button class="chip" id="copyBk">複製備份文字</button><button class="chip" id="importBk">匯入文字</button></div><div class="note" id="originNote"></div>
   </div>
   <button class="btn" id="teacherClose">完成</button>
 </div>
@@ -1066,7 +1066,7 @@ function enterMode(m){
 }
 document.querySelectorAll('.tab').forEach(t=>t.onclick=()=>{audio();enterMode(t.dataset.m);});
 $('drum').addEventListener('pointerdown',e=>{e.preventDefault();audio();click(ac.currentTime,true,ac.destination);input(71,'drum');});
-function showHome(){stopPerform();clearInterval(G.timer);$('homeTitle').textContent=CUR?`${CUR.name}，今天要玩什麼？`:'今天要玩什麼？';$('homeAv').innerHTML=CUR?avHtml(CUR,44):'';$('home').classList.remove('hide');}
+function showHome(){stopPerform();S.clef='treble';S.dyad=false;S.timed=false;S.tier=null;save();clearInterval(G.timer);$('homeTitle').textContent=CUR?`${CUR.name}，今天要玩什麼？`:'今天要玩什麼？';$('homeAv').innerHTML=CUR?avHtml(CUR,44):'';$('home').classList.remove('hide');}
 $('homeBtn').onclick=()=>{if(CUR)showHome();};
 $('switchUser2').onclick=()=>$('switchUser').click();
 $('homeSet').onclick=()=>$('gear').click();
@@ -1226,6 +1226,15 @@ function snapDB(t,force){try{let a=getSnaps();const now=Date.now();const n=progN
   a.push({t:now,n,s:(DB.studs||[]).length,d:t});
   while(a.length>14){let best=0;a.forEach((x,i)=>{if(x.n>a[best].n)best=i;});const k=a.findIndex((x,i)=>i!==best&&i<a.length-1);a.splice(k,1);}
   const v=JSON.stringify(a);localStorage.setItem('ng_snaps',v);idbSet('ng_snaps',v);}catch(e){}}
+function mergeFrom(src){let gained=0;if(!src||!Array.isArray(src.studs))return 0;
+  src.studs.forEach(o=>{const st=DB.studs.find(x=>x.id===o.id)||DB.studs.find(x=>x.name===o.name);if(!st)return;st.prog=st.prog||{};
+    Object.entries(o.prog||{}).forEach(([k,v])=>{if(k==='unlockAll'||k==='stkPending'||k==='rhySet')return;if(typeof v==='number'&&!(st.prog[k]>=v)){st.prog[k]=v;gained++;}});
+    if(Array.isArray(o.stickers)){st.stickers=st.stickers||[];o.stickers.forEach(x=>{const key=JSON.stringify(x);if(!st.stickers.some(y=>JSON.stringify(y)===key)){st.stickers.push(x);gained++;}});}
+    if(!st.avatar&&o.avatar)st.avatar=o.avatar;});
+  return gained;}
+async function recoverAll(){let g=0;const srcs=[];try{['ng_bk_prev','ng_bk_last'].forEach(k=>{const t=localStorage.getItem(k);if(t)srcs.push(t);});getSnaps().forEach(x=>srcs.push(x.d));}catch(e){}
+  const v=await idbGet('ng_db');if(v)srcs.push(v);const sv=await idbGet('ng_snaps');if(sv)try{JSON.parse(sv).forEach(x=>srcs.push(x.d));}catch(e){}
+  srcs.forEach(t=>{try{g+=mergeFrom(JSON.parse(t));}catch(e){}});if(g)saveDB();return g;}
 function saveDB(){const t=JSON.stringify(DB);try{localStorage.setItem('ng_db',t);}catch(e){}idbSet('ng_db',t);snapDB(t);
   try{const day=new Date().toISOString().slice(0,10);if(localStorage.getItem('ng_bk_day')!==day){localStorage.setItem('ng_bk_prev',localStorage.getItem('ng_bk_last')||t);localStorage.setItem('ng_bk_last',t);localStorage.setItem('ng_bk_day',day);}}catch(e){}}
 try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}catch(e){}
@@ -1233,6 +1242,7 @@ try{navigator.storage&&navigator.storage.persist&&navigator.storage.persist();}c
   if(!has&&v){try{Object.assign(DB,JSON.parse(v));localStorage.setItem('ng_db',v);if(!$('picker').classList.contains('hide'))showPicker();}catch(e){}}
   else if(has&&!v)idbSet('ng_db',localStorage.getItem('ng_db'));
   try{if(!localStorage.getItem('ng_snaps')){const sv=await idbGet('ng_snaps');if(sv)localStorage.setItem('ng_snaps',sv);}}catch(e){}
+  try{if(localStorage.getItem('ng_merge1')!=='1'){const g=await recoverAll();localStorage.setItem('ng_merge1','1');if(g&&!$('picker').classList.contains('hide'))showPicker();}}catch(e){}
   try{if(localStorage.getItem('ng_db'))snapDB(localStorage.getItem('ng_db'),!getSnaps().length);}catch(e){}})();
 let CUR=null;
 function earn(){}
@@ -1258,7 +1268,7 @@ function showPicker(){
 }
 $('pickTeacher').onclick=()=>askPin(showTeacher);
 $('pickGuest').onclick=()=>{startSession({id:'guest',guest:true,name:'訪客',color:'#8d6e63',prog:{unlockAll:true},stickers:[]});};
-function startSession(st){CUR=st;G.pinLv=null;$('studBtn').title=st.guest?'點這裡換人':'';audio();G.sess={gains:[],left:DB.minutes*60};updStud();$('picker').classList.add('hide');
+function startSession(st){CUR=st;G.pinLv=null;S.clef='treble';S.dyad=false;S.timed=false;S.tier=null;save();$('studBtn').title=st.guest?'點這裡換人':'';audio();G.sess={gains:[],left:DB.minutes*60};updStud();$('picker').classList.add('hide');
   say(`${st.name}，一起來玩吧！`);showHome();
   if(!st.guest&&st.prog&&st.prog.stkPending>0&&(!capN()||todayCount()<capN())){st.prog.stkPending--;saveDB();setTimeout(()=>offerSticker('上次存的','上次存起來的貼紙，現在可以選囉！'),900);}clearInterval(G.clockT);G.clockT=setInterval(tick,1000);tick();}
 function tick(){if(!G.sess)return;const c=$('clock');
@@ -1437,6 +1447,7 @@ $('capRow').querySelectorAll('.chip').forEach(c=>c.onclick=()=>{DB.cap=+c.datase
 $('savePin').onclick=()=>{const v=$('newPin').value;if(/^\d{4}$/.test(v)){DB.pin=v;saveDB();$('newPin').value='';toast('密碼已更新');}else toast('請輸入 4 位數字');};
 $('saveFile').onclick=()=>{const blob=new Blob([JSON.stringify(DB,null,1)],{type:'application/json'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='音符找琴鍵備份-'+new Date().toISOString().slice(0,10)+'.json';document.body.appendChild(a);a.click();setTimeout(()=>{URL.revokeObjectURL(a.href);a.remove();},1000);};
 $('loadFile').onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!Array.isArray(d.studs))throw 0;DB=Object.assign({studs:[],pin:'0000',minutes:5},d);saveDB();CUR=null;drawTeacher();toast('還原完成');}catch(err){toast('這個檔案不是備份檔');}});};
+$('recoverBtn').onclick=async()=>{const g=await recoverAll();CUR=null;drawTeacher();toast(g?`找回 ${g} 筆進度`:'備份裡沒有更多進度可以找回');};
 $('snapBtn').onclick=()=>{const el=$('snapList');if(el.style.display!=='none'){el.style.display='none';return;}const a=getSnaps();
   if(!a.length){toast('還沒有還原點');return;}
   el.innerHTML='<div style="width:100%;font-size:13px;color:#8a7a66">按一下要回到的時間點（數字＝學生數／進度與貼紙數）</div>'+a.map((x,i)=>{const d=new Date(x.t);return `<button class="chip" data-sn="${i}">${d.getMonth()+1}/${d.getDate()} ${String(d.getHours()).padStart(2,'0')}:${String(d.getMinutes()).padStart(2,'0')}　${x.s}人／${x.n}</button>`;}).reverse().join('');
