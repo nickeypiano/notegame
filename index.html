@@ -1164,12 +1164,13 @@ function micStop(){mic.on=false;if(mic.stream)mic.stream.getTracks().forEach(t=>
 function micLoop(){
   if(!mic.on)return;mic.an.getFloatTimeDomainData(mic.buf);
   let[f,rms]=autoCorr(mic.buf,ac.sampleRate);
-  if(f>0&&mic.fan){mic.fan.getFloatFrequencyData(mic.fbuf);for(const k of [3,2]){const fc=f/k;if(fc<60)continue;const [p1,f1]=bandPeak(fc);const [p2,f2]=bandPeak(fc*(k===3?2:3));if(p1-f1>10&&p2-f2>6){f=fc;break;}}}
+  if(f>0&&mic.fan){mic.fan.getFloatFrequencyData(mic.fbuf);for(const k of [3,2]){const fc=f/k;if(fc<60)continue;const [p1,f1]=bandPeak(fc);const [p2,f2]=bandPeak(fc*(k===3?2:3));if(p1-f1>10&&p2-f2>6){f=fc;break;}}if(f<300){const [q1,g1]=bandPeak(f),[q2,g2]=bandPeak(f*2);if(q1-g1<6&&q2-g2>15&&q2-q1>20)f*=2;}}
   $('lvl').style.width=Math.min(100,rms*600)+'%';
   const rc=mic.recent||rms;mic.hist.push(rc);if(mic.hist.length>6)mic.hist.shift();
   const minR=Math.min(...mic.hist.slice(0,-1));
   const now=ac.currentTime;const gap=now-(mic.lastT||0);
-  if(rc>.018&&rc>minR*1.6){mic.onsetT=now;}
+  if(rc>.018&&rc>minR*1.6){mic.onsetT=now;if(now-(mic.rstT||0)>.12){mic.rstT=now;mic.cand=-1;mic.cnt=0;mic.fh=[];}}
+  if(rc>.02&&rc>minR*2.2)mic.strongT=now;
   if(rc>.015&&rc>minR*1.4&&gap>.1){mic.armed=true;mic.armT=now;}
   if(mic.armed&&now-mic.armT>.5)mic.armed=false;
   if(S.mode==='read'&&G.target&&G.target.d2!=null&&!G.busy&&rc>.012)checkDyad();
@@ -1183,7 +1184,12 @@ function micLoop(){
   if(performance.now()-(G.kbdT||0)<600){mic.raf=requestAnimationFrame(micLoop);return;}
   const newPc=mic.lastEmit==null||((m-mic.lastEmit)%12+12)%12!==0;
   if(S.mode==='read'&&G.target&&G.target.d2!=null&&(mic.onsetT||0)<(G.qT||0)+.05){mic.raf=requestAnimationFrame(micLoop);return;}
-  if(m>0&&((mic.cnt>=3&&mic.armed)||(mic.cnt>=6&&newPc&&gap>.15&&rc>.012))){
+  let hold=false;
+  if(m>0&&m===mic.lastEmit){
+    if(now-(mic.strongT||0)>.25)hold=true;
+    if(S.mode==='read'&&G.target&&G.target.d2==null&&m!==midiOf(G.target.d))hold=true;
+  }
+  if(!hold&&m>0&&((mic.cnt>=3&&mic.armed)||(mic.cnt>=6&&newPc&&gap>.15&&rc>.012))){
     mic.armed=false;mic.lastT=now;mic.lastEmit=m;$('heard').textContent=SOLFA[m%12];input(m,'mic');
   }
   if(rms<.006){mic.lastEmit=null;}
