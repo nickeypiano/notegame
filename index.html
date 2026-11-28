@@ -917,7 +917,7 @@ function renderSong(){
         // beam line: straight between stem tips, at the extreme
         const tipA=up?Math.min(la,lb)-68:Math.max(la,lb)+68;o.stemLen=Math.abs(ly-tipA);
         if(bm.first){const xa=x+(up?12.5:-12.5),xe=xb(b.beat)+(up?12.5:-12.5);const ty=tipA+oy;
-          G.beams=G.beams||[];G.beams.push({i,j:bm.pair,d:`M${xa-1.5} ${ty-(up?0:6)}L${xb+1.5} ${ty-(up?0:6)}L${xb+1.5} ${ty+(up?7:1)}L${xa-1.5} ${ty+(up?7:1)}z`});}}
+          G.beams=G.beams||[];G.beams.push({i,j:bm.pair,d:`M${xa-1.5} ${ty-(up?0:6)}L${xe+1.5} ${ty-(up?0:6)}L${xe+1.5} ${ty+(up?7:1)}L${xa-1.5} ${ty+(up?7:1)}z`});}}
       g=drawNoteY(scroll,x,ly,oy,nt.dur,so.rhythm?'#4a3b2a':dColor(nt.d),o);}
     G.ng.push({g,x,y:(so.rhythm?100:localY(nt.d,nt.staff)+staffOff(nt.staff))||100});});
   (G.beams||[]).forEach(bm=>{const gA=G.ng[bm.i].g;el('path',{class:'nf',d:bm.d},gA);});G.beams=[];
@@ -1176,7 +1176,8 @@ function checkDyad(){mic.fan.getFloatFrequencyData(mic.fbuf);let mx=-200;for(let
   const fresh=(mic.onsetT||0)>(G.qT||0)+.05&&ac.currentTime-(mic.onsetT||0)<.4;
   mic.dyOk=ok&&fresh?mic.dyOk+1:0;
   if(mic.dyOk>=2){mic.dyOk=0;mic.lastT=ac.currentTime;mic.armed=false;$('heard').textContent=nameOf(Math.min(t.d,t.d2))+'＋'+nameOf(Math.max(t.d,t.d2));G.got=new Set([t.d]);readInput(midiOf(t.d2),'mic');}}
-function expNotes(){const so=curSong();if(!so||!so.notes)return [];
+function expNotes(){if(S.mode==='read'){const t=G.target;if(!t||G.busy||t.d2!=null||ac.currentTime-(G.qT||0)<.08)return [];return [{k:'r'+(G.qT||0),d:t.d}];}
+  const so=curSong();if(!so||!so.notes)return [];
   if(S.mode==='practice'){if(G.demoRun||!G.ev||G.idx>=G.ev.length)return [];return G.ev[G.idx].idx.filter(i=>!G.got.has(i)&&!so.notes[i].rest).map(i=>({k:'p'+G.idx+'_'+i,d:so.notes[i].d}));}
   if(S.mode==='perform'&&G.running&&!G.inDemo&&!so.rhythm){const bt=(ac.currentTime-.05-G.st)/G.spb;const r=[];so.notes.forEach((nt,i)=>{if(G.res[i]||nt.rest)return;if(Math.abs(bt-nt.beat)<.45)r.push({k:'f'+i,d:nt.d});});return r;}
   return [];}
@@ -1184,10 +1185,13 @@ function checkExpect(){const ex=expNotes();if(!ex.length){mic.exOk={};return;}
   mic.fan.getFloatFrequencyData(mic.fbuf);let mx=-200;for(let i=5;i<1200;i++)if(mic.fbuf[i]>mx)mx=mic.fbuf[i];
   G.exMin=G.exMin||{};mic.exOk=mic.exOk||{};const now=ac.currentTime;
   for(const e of ex){const m=midiOf(e.d);const f=440*Math.pow(2,(m-69)/12);const [p1,f1]=bandPeak(f);const [p2,f2]=bandPeak(f*2);
-    const there=(p1-f1>12&&p1>mx-26)||(p2-f2>14&&p2>mx-22&&p1-f1>4);const k1=e.k+'a',k2=e.k+'b';const m1=G.exMin[k1]==null?p1:Math.min(G.exMin[k1],p1),m2=G.exMin[k2]==null?p2:Math.min(G.exMin[k2],p2);G.exMin[k1]=m1;G.exMin[k2]=m2;
-    const r1=p1-m1,r2=p2-m2;const up=r1>=8||r2>=12||(r1>=1&&r2>=1&&r1+r2>=10);
+    const there=(p1-f1>12&&p1>mx-26)||(p2-f2>14&&p2>mx-22&&p1-f1>4);const rm=(k,v)=>{const h=G.exMin[k]=Array.isArray(G.exMin[k])?G.exMin[k]:[];h.push([now,v]);while(h.length&&now-h[0][0]>.35)h.shift();let mn=v;for(const x of h)if(x[1]<mn)mn=x[1];return mn;};
+    const m1=rm(e.k+'a',p1),m2=rm(e.k+'b',p2);
+    const r1=p1-m1,r2=p2-m2;let up=r1>=8||r2>=12||(r1>=1&&r2>=1&&r1+r2>=10);
+    if(S.mode==='read')up=r1>=7&&p1-f1>12&&p1>mx-30;
+    if(f/2>=55){const [p0,f0]=bandPeak(f/2);const m0=rm(e.k+'c',p0);if(up&&p0-f0>12&&p0-m0>=8&&p0>p1-12)up=false;}
     mic.exOk[e.k]=there&&up?(mic.exOk[e.k]||0)+1:0;
-    if(mic.exOk[e.k]>=2){mic.exOk[e.k]=0;G.exMin[e.k+'a']=G.exMin[e.k+'b']=-999;mic.lastT=now;mic.lastEmit=m;mic.armed=false;mic.cnt=0;$('heard').textContent=SOLFA[m%12];input(m,'mic');return true;}}
+    if(mic.exOk[e.k]>=2){mic.exOk[e.k]=0;mic.lastT=now;mic.lastEmit=m;mic.armed=false;mic.cnt=0;$('heard').textContent=SOLFA[m%12];input(m,'mic');return true;}}
   return false;}
 function micStop(){mic.on=false;if(mic.stream)mic.stream.getTracks().forEach(t=>t.stop());cancelAnimationFrame(mic.raf);$('micBtn').classList.remove('live');$('micinfo').classList.remove('on');$('listen').style.display='';}
 function micLoop(){
@@ -1203,7 +1207,7 @@ function micLoop(){
   if(rc>.015&&rc>minR*1.4&&gap>.1){mic.armed=true;mic.armT=now;}
   if(mic.armed&&now-mic.armT>.5)mic.armed=false;
   if(S.mode==='read'&&G.target&&G.target.d2!=null&&!G.busy&&rc>.012)checkDyad();
-  if((S.mode==='practice'||S.mode==='perform')&&rc>.008&&mic.fan&&checkExpect()){mic.raf=requestAnimationFrame(micLoop);return;}
+  if((S.mode==='practice'||S.mode==='perform'||S.mode==='read')&&rc>.008&&mic.fan&&performance.now()-(G.kbdT||0)>600&&checkExpect()){mic.raf=requestAnimationFrame(micLoop);return;}
   if(S.mode==='rhythm'){if(mic.armed&&rc>.03){mic.armed=false;mic.lastT=now;input(71,'mic');}mic.raf=requestAnimationFrame(micLoop);return;}
   if(G.running&&S.met&&G.spb){const ph=(ac.currentTime-G.clk0)/G.spb;const fr=ph-Math.floor(ph);if(ph>=0&&fr*G.spb<.035){mic.raf=requestAnimationFrame(micLoop);return;}}
   let m=-1,cents=99;if(f>60&&f<1150){const mf=69+12*Math.log2(f/440);m=Math.round(mf);cents=Math.abs(mf-m)*100;}
