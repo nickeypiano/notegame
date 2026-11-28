@@ -267,6 +267,7 @@ html,body{position:fixed;inset:0;width:100%;height:100%;overflow:hidden;overscro
 .pbtn .av svg,.av svg{width:100%!important;height:100%!important}
 #bird.nod{animation:nod .3s ease-out}
 @keyframes nod{0%{transform:translateY(0) rotate(0)}40%{transform:translateY(5px) rotate(-6deg)}100%{transform:translateY(0) rotate(0)}}
+.lcard.grad{background:#eefaf3;opacity:1}.lcard.grad em,.lcard.grad b{color:#2f9e6a}
 </style>
 </head>
 <body>
@@ -778,7 +779,7 @@ function showLevels(kind){G.lvKind=kind;const P=(CUR&&CUR.prog)||{};let tabs='',
   if(kind==='read'){$('lvTitle').textContent='認音符：選關卡';$('lvNote').textContent='一輪 10 題全部答對，就會打開下一關・可以玩最新的兩關';
     tabs=[['treble','高音'],['bass','低音'],['grand','雙手']].map(([c,n])=>`<button class="chip ${clefKey()===c?'on':''}" data-c="${c}">${n}</button>`).join('');
     const testCard=clefKey()!=='grand'?`<button class="lcard" data-test="1" style="background:#fff6e0"><em>跳級</em><b>測試 20 題</b><span style="font-size:12px;color:#a07f56">程度好可以直接跳關</span></button>`:'';
-    cards=levels().map((l,i)=>{const open=lvOpen(i),ok=lvPlay(i),grad=open&&!ok,done=P['readok_'+clefKey()+'_'+i];const [a,...b]=l.name.split(' ');return `<button class="lcard ${ok?'':'lock'}" data-i="${i}" ${ok?'':'disabled'}><em>${a}</em><b>${b.join(' ')}</b><span>${grad?CHECKI+'<small style="font-size:12px;color:#43b97f;margin-left:3px">已畢業</small>':done?CHECKI:ok?'':LOCKI}</span></button>`;}).join('')+testCard;}
+    cards=levels().map((l,i)=>{const open=lvOpen(i),ok=lvPlay(i),grad=open&&!ok,done=P['readok_'+clefKey()+'_'+i];const [a,...b]=l.name.split(' ');return `<button class="lcard ${ok?'':grad?'grad':'lock'}" data-i="${i}" ${ok?'':'disabled'}><em>${a}</em><b>${b.join(' ')}</b><span>${grad?CHECKI+'<small style="font-size:12px;color:#43b97f;margin-left:3px">已畢業</small>':done?CHECKI:ok?'':LOCKI}</span></button>`;}).join('')+testCard;}
   else if(kind==='rhythm'){$('lvTitle').textContent='打節奏：選關卡';$('lvNote').textContent='全部打對一次，就會打開下一關';
     cards=RLV.map((n,i)=>{const ok=rlvOpen(i),done=P['rhyok_'+i];return `<button class="lcard ${ok?'':'lock'}" data-i="${i}" ${ok?'':'disabled'}><em>第${i+1}關</em><b>${n}</b><span>${done?CHECKI:ok?'':LOCKI}</span></button>`;}).join('')+`<button class="lcard" data-i="c"><em>老師</em><b>自訂節奏</b><span></span></button>`;}
   else{$('lvTitle').textContent='30 秒挑戰：選一個';$('lvNote').textContent='看 30 秒內能答對幾個，挑戰自己的紀錄！';
