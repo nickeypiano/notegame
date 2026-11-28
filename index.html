@@ -1020,11 +1020,11 @@ function startPerform(demo=true){
   let t0=a.currentTime+.35;G.demoT=null;
   if(demo){const d0=t0;so.notes.forEach(nt=>{if(nt.rest)return;if(so.rhythm)click(d0+nt.beat*spb,false,b);else tone(midiOf(nt.d),0,Math.max(.4,nt.dur*spb*.95),.28,b,d0+nt.beat*spb);});accomp(so,d0,spb,b);G.demoT=d0;scheduleCount(so,d0,spb);t0=d0+so.total*spb+1;}
   const st=t0+MT*spb;G.mt=MT;
-  G.clk0=t0;G.clkN=MT+so.total;if(S.met)for(let k=0;k<MT+so.total;k++)click(t0+k*spb,k%MT===0,b);
+  G.clk0=t0;G.clkN=MT+so.total;if(S.met&&!(so.rhythm&&mic.on))for(let k=0;k<MT+so.total;k++)click(t0+k*spb,k%MT===0,b);
   else for(let k=0;k<MT;k++)click(t0+k*spb,k===0,b);
   if(S.mel&&!mic.on&&!so.rhythm)so.notes.forEach(nt=>!nt.rest&&tone(midiOf(nt.d),0,Math.max(.4,nt.dur*spb*.95),.22,b,st+nt.beat*spb));
   accomp(so,st,spb,b);
-  G.spb=spb;G.st=st;G.running=true;G.lastBeat=-99;
+  G.spb=spb;G.st=st;G.running=true;G.extra=0;G.lastBeat=-99;
   $('playBtn').querySelector('span').textContent=demo?'跳過示範':'停止';G.inDemo=demo;
   const loop=()=>{if(!G.running)return;
     if(G.inDemo){const db=(ac.currentTime-G.demoT)/G.spb;if(db<so.total+.3){setOffset(G.fixX-14-(xb(Math.max(0,db))));if(G.lastBeat!=='demo'){G.lastBeat='demo';say('先聽一次怎麼彈');}G.raf=requestAnimationFrame(loop);return;}
@@ -1041,14 +1041,15 @@ function startPerform(demo=true){
 function stopPerform(manual){stopCount();G.demoRun=false;G.running=false;G.inDemo=false;cancelAnimationFrame(G.raf);stopBus();beats(-1);if($('playBtn'))$('playBtn').querySelector('span').textContent='開始';if(manual){say('按「開始」再來一次！');}}
 function performInput(m,src,t){
   if(!G.running||G.inDemo)return;const so=curSong();const bt=(t-G.st)/G.spb;
-  let best=-1,bd=9,near=false;so.notes.forEach((nt,i)=>{if(G.res[i])return;const d=Math.abs(bt-nt.beat);if(d>=.5)return;near=true;if((so.rhythm||same(m,midiOf(nt.d),src))&&d<bd){bd=d;best=i;}});
+  const W=so.rhythm?.3:.5;let best=-1,bd=9,near=false;so.notes.forEach((nt,i)=>{if(G.res[i])return;const d=Math.abs(bt-nt.beat);if(d>=W)return;near=true;if((so.rhythm||same(m,midiOf(nt.d),src))&&d<bd){bd=d;best=i;}});
   if(best>=0){(G.recOk=G.recOk||{})[m%12]=ac.currentTime;const r=bd<.22?'perfect':'good';G.res[best]=r;markNote(best,r);if(r==='perfect')mood('happy');}
+  else if(so.rhythm){if(bt>-.3&&bt<so.total+.3){G.extra=(G.extra||0)+1;mood('oops');say('不是這裡喔');const x=xb(bt);const g=el('g',{},G.scroll);el('path',{d:`M${x-8} 152l16 16M${x+8} 152l-16 16`,stroke:'#e5484d','stroke-width':4,'stroke-linecap':'round'},g);}}
   else if(near){flashKey(m,'bad',400);mood('oops');}
 }
 function finishPerform(){
   stopPerform();const so=curSong();const p=G.res.filter(r=>r==='perfect').length,g=G.res.filter(r=>r==='good').length,tot=G.res.filter(r=>r!=='rest').length;
-  const acc=(p+g)/tot;const stars=acc>=1?3:acc>=.9?2:acc>=.6?1:0;if(so.rhythm&&acc>=1&&S.rlv!=='c'&&!S.learn)markProg('rhyok_'+(S.rlv||0),1);const key=so.rhythm?'rhy_'+(S.rlv||0):'perf_'+so.name+'_'+clefKey();const before=(CUR&&CUR.prog&&CUR.prog[key])||0;if(stars)markProg(key,stars);if(G.sess&&stars>before)G.sess.gains.push(`${so.name} ${stars}星`);
-  info(`很準 ${p}　不錯 ${g}　錯過 ${tot-p-g}`);say(stars===3?'太棒了！':'彈完了！');
+  const acc=(p+g)/(tot+(so.rhythm?(G.extra||0):0));const stars=acc>=1?3:acc>=.9?2:acc>=.6?1:0;if(so.rhythm&&acc>=1&&S.rlv!=='c'&&!S.learn)markProg('rhyok_'+(S.rlv||0),1);const key=so.rhythm?'rhy_'+(S.rlv||0):'perf_'+so.name+'_'+clefKey();const before=(CUR&&CUR.prog&&CUR.prog[key])||0;if(stars)markProg(key,stars);if(G.sess&&stars>before)G.sess.gains.push(`${so.name} ${stars}星`);
+  info(`很準 ${p}　不錯 ${g}　錯過 ${tot-p-g}`+(so.rhythm&&G.extra?`　多打 ${G.extra}`:''));say(stars===3?'太棒了！':'彈完了！');
   const L=songList();const nextOpen=!so.rhythm&&before<1&&stars>=1&&S.song+1<L.length;
   const tip=stars===3?'滿分！':stars===2?'再全部彈對就有三顆星':stars===1?'正確率 90% 以上可以拿兩顆星':'正確率 60% 以上就能拿到星星，再試一次';
   win(stars,stars===3?'完美！':stars>=1?'很不錯喔！':'差一點點！',`正確率 ${Math.round(acc*100)}%　${tip}`+(nextOpen?`　解鎖新曲子〈${L[S.song+1].name}〉！`:''),{next:stars>=1||so.rhythm,legend:{stars},menu:!so.rhythm});
@@ -1209,7 +1210,6 @@ function micLoop(){
   if(S.mode==='read'&&G.target&&G.target.d2!=null&&!G.busy&&rc>.012)checkDyad();
   if((S.mode==='practice'||S.mode==='perform'||S.mode==='read')&&rc>.008&&mic.fan&&performance.now()-(G.kbdT||0)>600&&checkExpect()){mic.raf=requestAnimationFrame(micLoop);return;}
   if(S.mode==='rhythm'){if(mic.armed&&rc>.03){mic.armed=false;mic.lastT=now;input(71,'mic');}mic.raf=requestAnimationFrame(micLoop);return;}
-  if(G.running&&S.met&&G.spb){const ph=(ac.currentTime-G.clk0)/G.spb;const fr=ph-Math.floor(ph);if(ph>=0&&fr*G.spb<.035){mic.raf=requestAnimationFrame(micLoop);return;}}
   let m=-1,cents=99;if(f>60&&f<1150){const mf=69+12*Math.log2(f/440);m=Math.round(mf);cents=Math.abs(mf-m)*100;}
   mic.fh=(mic.fh||[]);mic.fh.push(f>0?f:0);if(mic.fh.length>4)mic.fh.shift();
   const fs=mic.fh.slice(-3);const steady=fs.length===3&&fs.every(x=>x>0)&&Math.abs(1200*Math.log2(Math.max(...fs)/Math.min(...fs)))<25;
